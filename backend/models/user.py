@@ -30,3 +30,16 @@ class UpdateProfileRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(min_length=6)
+
+
+class InviteUserRequest(BaseModel):
+    fullName: str
+    email: EmailStr
+    role: Literal["member", "clergy", "admin"] = "member"
+    parish: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class CompleteInviteRequest(BaseModel):
+    invite_token: str = Field(min_length=12)
+    password: str = Field(min_length=8)

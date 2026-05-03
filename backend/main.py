@@ -1,7 +1,9 @@
+import os
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 
 from utils.indexes import create_indexes
 
@@ -24,11 +26,20 @@ async def lifespan(app: FastAPI):
     yield
 
 
+load_dotenv()
+
+environment = os.getenv("ENVIRONMENT", "development").strip().lower()
+cors_origins = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
+cors_origins = [origin.strip() for origin in cors_origins if origin.strip()]
+
+if environment != "production" and not cors_origins:
+    cors_origins = ["*"]
+
 app = FastAPI(title="Oke-Osun Diocese API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

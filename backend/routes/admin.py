@@ -1,11 +1,21 @@
+import hashlib
+import secrets
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, HTTPException, Depends, Query
+
 from middleware.auth import require_admin
+from models.user import InviteUserRequest
 from database import db
 from bson import ObjectId
-from utils.helpers import format_doc, utcnow, validate_object_id
+from utils.helpers import format_doc, utcnow, validate_object_id, sanitize_string
 from utils.audit import log_audit
 
 router = APIRouter()
+
+
+def _invite_expiry_iso(days: int = 7) -> str:
+    return (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
 
 
 # ── GET /admin/users — list all users with search + filter + pagination ──
@@ -43,6 +53,58 @@ async def get_all_users(
         "total": total,
         "page":  page,
         "pages": (total + limit - 1) // limit,
+    }
+
+
+@router.post("/users/invite")
+async def invite_user(
+    request: InviteUserRequest,
+    current_user: dict = Depends(require_admin),
+):
+    existing = await db.users.find_one({"email": request.email.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail="An account with this email already exists")
+
+    invite_token = secrets.token_urlsafe(24)
+    invite_token_hash = hashlib.sha256(invite_token.encode("utf-8")).hexdigest()
+
+    user = {
+        "fullName": sanitize_string(request.fullName),
+        "email": request.email.lower(),
+        "password": None,
+        "role": request.role,
+        "status": "pending" if request.role == "clergy" else "active",
+        "parish": sanitize_string(request.parish) if request.parish else None,
+        "phone": sanitize_string(request.phone) if request.phone else None,
+        "createdAt": utcnow(),
+        "updatedAt": utcnow(),
+        "inviteAccepted": False,
+        "inviteTokenHash": invite_token_hash,
+        "inviteCreatedAt": utcnow(),
+        "inviteExpiresAt": _invite_expiry_iso(),
+        "invitedBy": current_user["email"],
+    }
+
+    result = await db.users.insert_one(user)
+    user["id"] = str(result.inserted_id)
+    user.pop("_id", None)
+    user.pop("password", None)
+    user.pop("inviteTokenHash", None)
+
+    await log_audit(
+        admin_email=current_user["email"],
+        admin_name=current_user["fullName"],
+        action="INVITE_USER",
+        target_id=user["id"],
+        target_email=user["email"],
+        details=f"Invited {user['fullName']} as {user['role']}",
+    )
+
+    return {
+        "message": "User invited successfully",
+        "user": user,
+        "inviteToken": invite_token,
+        "inviteExpiresAt": user["inviteExpiresAt"],
     }
 
 

@@ -9,9 +9,18 @@ load_dotenv()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-JWT_SECRET    = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRE_DAYS = int(os.getenv("JWT_EXPIRE_DAYS", 7))
+
+
+def get_jwt_secret() -> str:
+    jwt_secret = os.getenv("JWT_SECRET")
+    if not jwt_secret:
+        raise RuntimeError("JWT_SECRET must be configured")
+    return jwt_secret
+
+
+def get_jwt_expire_days() -> int:
+    return int(os.getenv("JWT_EXPIRE_DAYS", 7))
 
 
 def hash_password(password: str) -> str:
@@ -23,19 +32,21 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_token(email: str, role: str) -> str:
-    expire = datetime.now(timezone.utc).isoformat()
+    jwt_secret = get_jwt_secret()
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(days=get_jwt_expire_days())
     payload = {
         "email": email,
         "role":  role,
-        "exp":   expire,
-        "iat":   datetime.now(timezone.utc),
+        "exp":   int(expire.timestamp()),
+        "iat":   int(now.timestamp()),
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, jwt_secret, algorithm=JWT_ALGORITHM)
 
 
 def decode_token(token: str) -> dict:
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, get_jwt_secret(), algorithms=[JWT_ALGORITHM])
         if not payload.get("email"):
             raise HTTPException(status_code=401, detail="Invalid token payload")
         return payload

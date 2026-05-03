@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
-from middleware.auth import get_current_user, require_admin
-from models.parish import CreateParishRequest, UpdateParishRequest
+
+from middleware.auth import get_current_user, require_admin, require_clergy
+from models.parish import CreateParishRequest, UpdateParishRequest, CreateParishNoticeRequest
 from database import db
 from utils.helpers import format_doc, utcnow, validate_object_id, sanitize_string
 
@@ -22,6 +23,53 @@ async def get_my_parish(current_user: dict = Depends(get_current_user)):
     if not parish:
         raise HTTPException(status_code=404, detail="Parish not found")
     return {"parish": format_doc(parish)}
+
+
+@router.get("/me/members")
+async def get_my_parish_members(current_user: dict = Depends(require_clergy)):
+    parish_name = current_user.get("parish")
+    if not parish_name:
+        raise HTTPException(status_code=404, detail="No parish assigned")
+
+    members = await db.users.find(
+        {"parish": parish_name},
+        {"password": 0, "inviteTokenHash": 0},
+    ).sort("fullName", 1).to_list(length=500)
+    return {"members": [format_doc(member) for member in members]}
+
+
+@router.get("/me/notices")
+async def get_my_parish_notices(current_user: dict = Depends(get_current_user)):
+    parish_name = current_user.get("parish")
+    if not parish_name:
+        raise HTTPException(status_code=404, detail="No parish assigned")
+
+    notices = await db.parish_notices.find({"parish": parish_name}).sort("createdAt", -1).to_list(length=100)
+    return {"notices": [format_doc(notice) for notice in notices]}
+
+
+@router.post("/me/notices")
+async def create_my_parish_notice(
+    request: CreateParishNoticeRequest,
+    current_user: dict = Depends(require_clergy),
+):
+    parish_name = current_user.get("parish")
+    if not parish_name:
+        raise HTTPException(status_code=404, detail="No parish assigned")
+
+    notice = {
+        "title": sanitize_string(request.title),
+        "body": sanitize_string(request.body),
+        "priority": request.priority,
+        "parish": parish_name,
+        "createdBy": current_user["email"],
+        "creatorName": current_user["fullName"],
+        "createdAt": utcnow(),
+        "updatedAt": utcnow(),
+    }
+    result = await db.parish_notices.insert_one(notice)
+    notice["id"] = str(result.inserted_id)
+    return {"message": "Notice posted successfully", "notice": notice}
 
 
 @router.get("/{parish_id}")

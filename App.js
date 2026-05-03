@@ -1,20 +1,36 @@
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from './src/context/AuthContext';
+import Navigation from './src/navigation';
+import ErrorBoundary from './src/components/ui/ErrorBoundary';
 
 export default function App() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        retry: 2,
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+        refetchOnReconnect: true,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+      },
+      mutations: {
+        retry: 1,
+      },
+    },
+  });
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ErrorBoundary>
+          <StatusBar style="light" backgroundColor="#0A0C10" />
+          <Navigation />
+        </ErrorBoundary>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

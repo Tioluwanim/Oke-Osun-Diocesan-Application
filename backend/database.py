@@ -1,17 +1,22 @@
-from motor.motor_asyncio import AsyncIOMotorClient
-from dotenv import load_dotenv
 import os
+import logging
 
-# Load .env file
+from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
+
 load_dotenv()
+logger = logging.getLogger(__name__)
 
-# Read URI from .env
 uri = os.getenv("MONGO_URI")
+database_name = os.getenv("DATABASE_NAME")
 
-# Create async client
-client = AsyncIOMotorClient(uri)
+if not uri:
+    raise RuntimeError("MONGO_URI must be configured")
 
-# Database instance
-db = client[os.getenv("DATABASE_NAME")]
+if not database_name:
+    raise RuntimeError("DATABASE_NAME must be configured")
 
-print("Database connected!")
+client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000)
+db = client[database_name]
+
+logger.info("MongoDB client configured for database %s", database_name)
