@@ -10,3 +10,4 @@ bcrypt==4.0.1
 google-cloud-storage
 pytest
 httpx
+python-multipart
