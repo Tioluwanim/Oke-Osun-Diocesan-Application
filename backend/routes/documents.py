@@ -1,10 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from middleware.auth import require_clergy, require_admin
 from database import db
 from bson import ObjectId
 from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
+
+from utils.gcs import upload_file_to_gcs
+from utils.upload_helpers import parse_form_or_json
 
 router = APIRouter()
 
@@ -34,10 +37,24 @@ async def get_documents():
 
 @router.post("/")
 async def create_document(
-    request: CreateDocumentRequest,
+    request: Request,
     current_user: dict = Depends(require_clergy)
 ):
-    doc = request.model_dump()
+    data, file = await parse_form_or_json(request, ["title", "category", "size", "date", "url"])
+    if not data.get("title"):
+        raise HTTPException(status_code=400, detail="Title is required")
+    if file:
+        data["url"] = upload_file_to_gcs(file, "documents")
+        if not data.get("size"):
+            data["size"] = file.filename
+
+    doc = {
+        "title": data["title"],
+        "category": data.get("category") or "Administration",
+        "size": data.get("size"),
+        "date": data.get("date"),
+        "url": data.get("url"),
+    }
     doc["uploadedBy"] = current_user["email"]
     doc["uploaderName"] = current_user["fullName"]
     doc["createdAt"] = datetime.utcnow().isoformat()

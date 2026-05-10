@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from middleware.auth import require_clergy
-from models.sermon import CreateSermonRequest, UpdateSermonRequest
+from models.sermon import UpdateSermonRequest
 from database import db
 from utils.helpers import format_doc, utcnow, validate_object_id, sanitize_string
+from utils.gcs import upload_file_to_gcs
+from utils.upload_helpers import parse_form_or_json
 
 router = APIRouter()
 
@@ -49,18 +51,34 @@ async def get_sermon(sermon_id: str):
 
 @router.post("/")
 async def create_sermon(
-    request: CreateSermonRequest,
+    request: Request,
     current_user: dict = Depends(require_clergy)
 ):
-    sermon = request.model_dump()
-    sermon["title"]        = sanitize_string(sermon["title"])
-    sermon["preacher"]     = sanitize_string(sermon["preacher"])
-    sermon["description"]  = sanitize_string(sermon.get("description", "") or "")
-    sermon["uploadedBy"]   = current_user["email"]
-    sermon["uploaderName"] = current_user["fullName"]
-    sermon["views"]        = 0
-    sermon["createdAt"]    = utcnow()
-    sermon["updatedAt"]    = utcnow()
+    data, file = await parse_form_or_json(
+        request,
+        ["title", "preacher", "scripture", "description", "type", "series", "duration", "url", "parish"],
+    )
+    if not data.get("title") or not data.get("preacher"):
+        raise HTTPException(status_code=400, detail="Title and preacher are required")
+    if file:
+        data["url"] = upload_file_to_gcs(file, "sermons")
+
+    sermon = {
+        "title": sanitize_string(data["title"]),
+        "preacher": sanitize_string(data["preacher"]),
+        "scripture": data.get("scripture"),
+        "description": sanitize_string(data.get("description") or ""),
+        "type": data.get("type") if data.get("type") in ["Audio", "Video"] else "Audio",
+        "series": data.get("series"),
+        "duration": data.get("duration"),
+        "url": data.get("url"),
+        "parish": data.get("parish"),
+        "uploadedBy": current_user["email"],
+        "uploaderName": current_user["fullName"],
+        "views": 0,
+        "createdAt": utcnow(),
+        "updatedAt": utcnow(),
+    }
     result = await db.sermons.insert_one(sermon)
     sermon["id"] = str(result.inserted_id)
     sermon.pop("_id", None)

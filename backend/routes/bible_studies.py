@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from middleware.auth import require_clergy
-from models.bible_study import CreateBibleStudyRequest, UpdateBibleStudyRequest
+from models.bible_study import UpdateBibleStudyRequest
 from database import db
 from utils.helpers import format_doc, utcnow, validate_object_id, sanitize_string
+from utils.gcs import upload_file_to_gcs
+from utils.upload_helpers import parse_form_or_json, parse_optional_int, parse_json_field
 
 router = APIRouter()
 
@@ -40,22 +42,32 @@ async def get_bible_study(study_id: str):
 
 @router.post("/")
 async def create_bible_study(
-    request: CreateBibleStudyRequest,
+    request: Request,
     current_user: dict = Depends(require_clergy)
 ):
-    study = request.model_dump()
-    study["title"]        = sanitize_string(study["title"])
-    study["uploadedBy"]   = current_user["email"]
-    study["uploaderName"] = current_user["fullName"]
-    study["isNew"]        = True
-    study["createdAt"]    = utcnow()
-    study["updatedAt"]    = utcnow()
-    # convert lessonItems to plain dicts
-    if study.get("lessonItems"):
-        study["lessonItems"] = [
-            item if isinstance(item, dict) else item.dict()
-            for item in study["lessonItems"]
-        ]
+    data, file = await parse_form_or_json(
+        request,
+        ["title", "book", "lessons", "level", "description", "lessonItems", "url"],
+    )
+    if not data.get("title") or not data.get("book"):
+        raise HTTPException(status_code=400, detail="Title and book are required")
+    if file:
+        data["url"] = upload_file_to_gcs(file, "bible-studies")
+
+    study = {
+        "title": sanitize_string(data["title"]),
+        "book": data["book"],
+        "lessons": parse_optional_int(data.get("lessons")) or 1,
+        "level": data.get("level") or "Beginner",
+        "description": data.get("description"),
+        "lessonItems": parse_json_field(data.get("lessonItems"), "lessonItems") or [],
+        "url": data.get("url"),
+        "uploadedBy": current_user["email"],
+        "uploaderName": current_user["fullName"],
+        "isNew": True,
+        "createdAt": utcnow(),
+        "updatedAt": utcnow(),
+    }
     result = await db.bible_studies.insert_one(study)
     study["id"] = str(result.inserted_id)
     study.pop("_id", None)
