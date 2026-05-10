@@ -37,6 +37,7 @@ export const API_ROUTES = {
   documents:     `${API_BASE_URL}/documents`,
   documentById:  (id) => `${API_BASE_URL}/documents/${id}`,
   auditLogs:     `${API_BASE_URL}/admin/audit-logs`,
+  uploads:       `${API_BASE_URL}/uploads`,
 };
 
 export const ROLES = {

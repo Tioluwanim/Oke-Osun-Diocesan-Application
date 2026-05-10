@@ -2,12 +2,14 @@ export const COLORS = {
   // Backgrounds
   background: '#0A0C10',
   surface: '#111318',
-  surface2: '#181C24',
+  surface2: '#1B2030',
+  surfaceElevated: '#181D2A',
 
   // Brand
   gold: '#C9A84C',
   goldLight: '#E8C97A',
   goldDim: '#8A6D2E',
+  softGold: 'rgba(201, 168, 76, 0.16)',
 
   // Text
   text: '#E8E4D8',

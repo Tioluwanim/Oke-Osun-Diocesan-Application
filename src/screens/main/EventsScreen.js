@@ -22,13 +22,13 @@ import { queryFns, queryKeys } from '../../lib/api';
 const { width } = Dimensions.get('window');
 
 const FILTERS = [
-  { label: 'All', icon: 'âœ¦' },
-  { label: 'Service', icon: 'â›ª' },
-  { label: 'Conference', icon: 'ðŸ›ï¸' },
-  { label: 'Meeting', icon: 'ðŸ“‹' },
-  { label: 'Outreach', icon: 'ðŸŒ¿' },
-  { label: 'Youth', icon: 'âš¡' },
-  { label: 'Other', icon: 'âœ¨' },
+  { label: 'All', icon: '✦' },
+  { label: 'Service', icon: '⛪' },
+  { label: 'Conference', icon: '🏛️' },
+  { label: 'Meeting', icon: '🤝' },
+  { label: 'Outreach', icon: '🌍' },
+  { label: 'Youth', icon: '✨' },
+  { label: 'Other', icon: '✳️' },
 ];
 
 const TYPE_CONFIG = {
@@ -70,7 +70,7 @@ export default function EventsScreen() {
   const typeConfig = (type) => TYPE_CONFIG[type] || { color: COLORS.gold, bg: 'rgba(201,168,76,0.1)' };
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return 'â€”';
+    if (!dateStr) return '—';
     try {
       const d = new Date(dateStr);
       return d.toDateString();
@@ -87,11 +87,11 @@ export default function EventsScreen() {
         <View>
           <Text style={styles.headerTitle}>Events</Text>
           <Text style={styles.headerSubtitle}>
-            Diocese of Oke-Osun Â· {filteredEvents.length} upcoming
+            Diocese of Oke-Osun · {filteredEvents.length} upcoming
           </Text>
         </View>
         <View style={styles.headerIcon}>
-          <Text style={styles.headerIconText}>ðŸ“…</Text>
+          <Text style={styles.headerIconText}>📅</Text>
         </View>
       </View>
 
@@ -116,7 +116,7 @@ export default function EventsScreen() {
           <View>
             <View style={styles.searchContainer}>
               <View style={styles.searchWrapper}>
-                <Text style={styles.searchIcon}>ðŸ”</Text>
+                <Text style={styles.searchIcon}>🔍</Text>
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search events, location..."
@@ -126,7 +126,7 @@ export default function EventsScreen() {
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.searchClearBtn}>
-                    <Text style={styles.searchClear}>âœ•</Text>
+                    <Text style={styles.searchClear}>✕</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -166,7 +166,7 @@ export default function EventsScreen() {
             {!isLoading && error && (
               <View style={styles.listContent}>
                 <EmptyState
-                  icon="ðŸ“­"
+                  icon="📭"
                   title="Unable to load events"
                   description="Please check your connection and try again."
                   actionLabel="Retry"
@@ -196,7 +196,7 @@ export default function EventsScreen() {
                   </View>
                   {event.isAllParishes && (
                     <View style={styles.allParishesBadge}>
-                      <Text style={styles.allParishesBadgeText}>ðŸŒ All Parishes</Text>
+                      <Text style={styles.allParishesBadgeText}>🌐 All Parishes</Text>
                     </View>
                   )}
                   <Text style={styles.eventCardNumber}>
@@ -207,21 +207,21 @@ export default function EventsScreen() {
                 <Text style={styles.eventTitle}>{event.title}</Text>
 
                 <View style={styles.eventMetaGrid}>
-                  <EventMeta icon="ðŸ“…" text={`${formatDate(event.date)}${event.time ? `  Â·  ${event.time}` : ''}`} />
-                  {event.location && <EventMeta icon="ðŸ“" text={event.location} lines={1} />}
-                  {event.creatorName && <EventMeta icon="â›ª" text={event.creatorName} lines={1} />}
+                  <EventMeta icon="📅" text={`${formatDate(event.date)}${event.time ? `  ·  ${event.time}` : ''}`} />
+                  {event.location && <EventMeta icon="📍" text={event.location} lines={1} />}
+                  {event.creatorName && <EventMeta icon="👤" text={event.creatorName} lines={1} />}
                 </View>
 
                 <View style={styles.eventFooter}>
                   <View style={styles.attendingRow}>
-                    <Text style={styles.attendingDot}>â—</Text>
+                    <Text style={styles.attendingDot}>•</Text>
                     <Text style={styles.attendingText}>
-                      {event.createdAt ? formatDate(event.createdAt) : 'â€”'}
+                      {event.createdAt ? formatDate(event.createdAt) : '—'}
                     </Text>
                   </View>
                   <View style={[styles.categoryPill, { backgroundColor: config.bg, borderColor: config.color }]}>
                     <Text style={[styles.categoryPillText, { color: config.color }]}>
-                      View Details â€º
+                      View Details ›
                     </Text>
                   </View>
                 </View>
@@ -231,7 +231,7 @@ export default function EventsScreen() {
         }}
         ListEmptyComponent={!isLoading && !error ? (
           <EmptyState
-            icon="ðŸ“­"
+            icon="📭"
             title="No events found"
             description={searchQuery ? 'Try a different search' : 'No events match this filter'}
             actionLabel="Reset Filters"
@@ -251,7 +251,7 @@ export default function EventsScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <TouchableOpacity style={styles.modalClose} onPress={() => setSelectedEvent(null)}>
-              <Text style={styles.modalCloseText}>âœ•</Text>
+              <Text style={styles.modalCloseText}>✕</Text>
             </TouchableOpacity>
 
             {selectedEvent && (
@@ -267,11 +267,11 @@ export default function EventsScreen() {
                 <Text style={styles.modalTitle}>{selectedEvent.title}</Text>
 
                 <View style={styles.modalMetaGrid}>
-                  <ModalMeta icon="ðŸ“…" label="Date" value={formatDate(selectedEvent.date)} half />
-                  {selectedEvent.time && <ModalMeta icon="â°" label="Time" value={selectedEvent.time} half />}
-                  {selectedEvent.location && <ModalMeta icon="ðŸ“" label="Location" value={selectedEvent.location} />}
-                  {selectedEvent.creatorName && <ModalMeta icon="â›ª" label="Organised by" value={selectedEvent.creatorName} />}
-                  {selectedEvent.parish && <ModalMeta icon="ðŸ›ï¸" label="Parish" value={selectedEvent.parish} />}
+                  <ModalMeta icon="📅" label="Date" value={formatDate(selectedEvent.date)} half />
+                  {selectedEvent.time && <ModalMeta icon="⏰" label="Time" value={selectedEvent.time} half />}
+                  {selectedEvent.location && <ModalMeta icon="📍" label="Location" value={selectedEvent.location} />}
+                  {selectedEvent.creatorName && <ModalMeta icon="👤" label="Organised by" value={selectedEvent.creatorName} />}
+                  {selectedEvent.parish && <ModalMeta icon="⛪" label="Parish" value={selectedEvent.parish} />}
                 </View>
 
                 <View style={styles.modalDivider} />
@@ -285,11 +285,11 @@ export default function EventsScreen() {
 
                 <View style={styles.postedRow}>
                   <Text style={styles.postedText}>
-                    ðŸ“Œ Posted {selectedEvent.createdAt ? formatDate(selectedEvent.createdAt) : 'â€”'}
+                    📌 Posted {selectedEvent.createdAt ? formatDate(selectedEvent.createdAt) : '—'}
                   </Text>
                   {selectedEvent.isAllParishes && (
                     <View style={styles.allParishesTag}>
-                      <Text style={styles.allParishesTagText}>ðŸŒ Diocese-wide Event</Text>
+                      <Text style={styles.allParishesTagText}>🌐 Diocese-wide Event</Text>
                     </View>
                   )}
                 </View>

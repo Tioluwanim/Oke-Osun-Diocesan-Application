@@ -13,10 +13,12 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { API_ROUTES } from '../../constants/config';
 import useOptimisticUpdate from '../../hooks/useOptimisticUpdate';
+import { uploadFileToGCS } from '../../lib/fileUpload';
 
 const INNER_TABS = [
   { key: 'users',     label: 'Users',     icon: '👤' },
@@ -114,6 +116,8 @@ export default function ManageScreen({ navigation }) {
   const [resLessons, setResLessons] = useState('');
   const [resLevel, setResLevel] = useState('Beginner');
   const [resSize, setResSize] = useState('');
+  const [resPickedFile, setResPickedFile] = useState(null);
+  const [resUploading, setResUploading] = useState(false);
 
   // ── Auth headers ──
   const authHeaders = {
@@ -487,20 +491,52 @@ export default function ManageScreen({ navigation }) {
   };
 
   // ── Upload Resource ──
+  const handlePickResourceFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
+      if (result.canceled) return;
+      const file = result.assets[0];
+      setResPickedFile(file);
+      if (!resUrl.trim()) setResUrl(file.name);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick file');
+    }
+  };
+
   const handleUploadResource = async () => {
     if (!resTitle.trim()) { Alert.alert('Error', 'Title is required.'); return; }
     setSavingResource(true);
+    setResUploading(true);
     try {
       let url, body;
+      let finalUrl = resUrl.trim() || null;
+
+      // If file is picked, upload it to GCS first
+      if (resPickedFile) {
+        try {
+          const folderMap = {
+            magazine: 'magazines',
+            bible_study: 'bible-studies',
+            document: 'documents',
+          };
+          finalUrl = await uploadFileToGCS(resPickedFile, token, folderMap[resourceType]);
+        } catch (error) {
+          Alert.alert('Upload Error', error.message || 'Failed to upload file');
+          setSavingResource(false);
+          setResUploading(false);
+          return;
+        }
+      }
+
       if (resourceType === 'magazine') {
         url = API_ROUTES.magazines;
-        body = { title: resTitle.trim(), category: resCategory || 'Newsletter', date: resDate.trim() || null, description: resDescription.trim() || null, url: resUrl.trim() || null, pages: resPages ? parseInt(resPages) : null };
+        body = { title: resTitle.trim(), category: resCategory || 'Newsletter', date: resDate.trim() || null, description: resDescription.trim() || null, url: finalUrl, pages: resPages ? parseInt(resPages) : null };
       } else if (resourceType === 'bible_study') {
         url = API_ROUTES.bibleStudies;
-        body = { title: resTitle.trim(), book: resBook.trim() || 'General', lessons: resLessons ? parseInt(resLessons) : 1, level: resLevel, description: resDescription.trim() || null, url: resUrl.trim() || null };
+        body = { title: resTitle.trim(), book: resBook.trim() || 'General', lessons: resLessons ? parseInt(resLessons) : 1, level: resLevel, description: resDescription.trim() || null, url: finalUrl };
       } else {
         url = API_ROUTES.documents;
-        body = { title: resTitle.trim(), category: resCategory || 'Administration', date: resDate.trim() || null, size: resSize.trim() || null, url: resUrl.trim() || null };
+        body = { title: resTitle.trim(), category: resCategory || 'Administration', date: resDate.trim() || null, size: resSize.trim() || null, url: finalUrl };
       }
       const res = await fetch(url, { method: 'POST', headers: authHeaders, body: JSON.stringify(body) });
       const data = await res.json();
@@ -511,14 +547,14 @@ export default function ManageScreen({ navigation }) {
       } else {
         Alert.alert('Error', data.detail || 'Failed to upload');
       }
-    } catch { Alert.alert('Error', 'Network error'); }
-    finally { setSavingResource(false); }
+    } catch (error) { Alert.alert('Error', error.message || 'Network error'); }
+    finally { setSavingResource(false); setResUploading(false); }
   };
 
   const resetResourceForm = () => {
     setResTitle(''); setResCategory(''); setResDate(''); setResDescription('');
     setResUrl(''); setResPages(''); setResBook(''); setResLessons('');
-    setResLevel('Beginner'); setResSize('');
+    setResLevel('Beginner'); setResSize(''); setResPickedFile(null);
   };
 
   // ── Filtered users ──

@@ -33,18 +33,24 @@ export default function LoadingButton({
 
 const styles = StyleSheet.create({
   button: {
-    height: 52,
-    borderRadius: RADIUS.lg,
+    minHeight: 54,
+    borderRadius: RADIUS.full,
     backgroundColor: COLORS.gold,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 6,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
-  disabled: { opacity: 0.6 },
+  disabled: { opacity: 0.65 },
   text: {
     color: COLORS.background,
     fontSize: FONTS.sizes.md,

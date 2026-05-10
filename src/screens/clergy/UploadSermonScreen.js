@@ -13,11 +13,13 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { API_ROUTES } from '../../constants/config';
 import PageLoader from '../../components/ui/PageLoader';
 import useOptimisticUpdate from '../../hooks/useOptimisticUpdate';
+import { uploadFileToGCS } from '../../lib/fileUpload';
 
 const TYPE_CONFIG = {
   Audio: { color: COLORS.gold, bg: 'rgba(201,168,76,0.1)', icon: '🎙️' },
@@ -54,6 +56,8 @@ export default function UploadSermonScreen({ navigation }) {
   const [formDescription, setFormDescription] = useState('');
   const [seriesDropdown, setSeriesDropdown] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [pickedFile, setPickedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const { runOptimistic } = useOptimisticUpdate();
 
   // ── Auth headers ──
@@ -108,23 +112,56 @@ export default function UploadSermonScreen({ navigation }) {
     setFormDuration('');
     setFormDescription('');
     setSeriesDropdown(false);
+    setPickedFile(null);
+  };
+
+  // ── Pick file ──
+  const handlePickFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: formType === 'Video' ? ['video/*'] : ['audio/*'],
+      });
+      if (result.canceled) return;
+      const file = result.assets[0];
+      setPickedFile(file);
+      if (!formLink.trim()) setFormLink(file.name);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick file');
+    }
   };
 
   // ── Upload sermon ──
   const handleUpload = async () => {
-    if (!formTitle.trim() || !formScripture.trim() || !formLink.trim()) {
-      Alert.alert('Missing Fields', 'Please fill in Title, Scripture, and Link.');
+    if (!formTitle.trim() || !formScripture.trim() || (!formLink.trim() && !pickedFile)) {
+      Alert.alert('Missing Fields', 'Please fill in Title, Scripture, and either provide a Link or pick a File.');
       return;
     }
+
     setSubmitting(true);
+    setUploading(true);
+
     try {
+      let finalUrl = formLink.trim();
+
+      // If file is picked, upload it to GCS first
+      if (pickedFile) {
+        try {
+          finalUrl = await uploadFileToGCS(pickedFile, token, 'sermons');
+        } catch (error) {
+          Alert.alert('Upload Error', error.message || 'Failed to upload file');
+          setSubmitting(false);
+          setUploading(false);
+          return;
+        }
+      }
+
       const optimisticSermon = {
         id: `tmp-${Date.now()}`,
         title: formTitle.trim(),
         scripture: formScripture.trim(),
         series: formSeries === 'None' ? null : formSeries || null,
         type: formType,
-        url: formLink.trim(),
+        url: finalUrl,
         duration: formDuration.trim() || null,
         description: formDescription.trim() || null,
         preacher: user?.fullName,
@@ -144,14 +181,14 @@ export default function UploadSermonScreen({ navigation }) {
             method: 'POST',
             headers: authHeaders,
             body: JSON.stringify({
-              title:       formTitle.trim(),
-              scripture:   formScripture.trim(),
-              series:      formSeries === 'None' ? null : formSeries || null,
-              type:        formType,
-              url:         formLink.trim(),
-              duration:    formDuration.trim() || null,
+              title: formTitle.trim(),
+              scripture: formScripture.trim(),
+              series: formSeries === 'None' ? null : formSeries || null,
+              type: formType,
+              url: finalUrl,
+              duration: formDuration.trim() || null,
               description: formDescription.trim() || null,
-              preacher:    user?.fullName,
+              preacher: user?.fullName,
             }),
           });
           const data = await response.json();
@@ -168,10 +205,11 @@ export default function UploadSermonScreen({ navigation }) {
       } else {
         Alert.alert('Error', 'Failed to upload sermon');
       }
-    } catch {
-      Alert.alert('Error', 'Network error.');
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Network error.');
     } finally {
       setSubmitting(false);
+      setUploading(false);
     }
   };
 
@@ -469,6 +507,31 @@ export default function UploadSermonScreen({ navigation }) {
                 placeholder={formType === 'Audio' ? 'e.g. https://soundcloud.com/...' : 'e.g. https://youtube.com/...'}
                 keyboardType="url"
               />
+
+              {/* File Picker */}
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>📁  OR UPLOAD FILE</Text>
+                <TouchableOpacity
+                  style={[styles.filePickerBtn, pickedFile && styles.filePickerBtnActive]}
+                  onPress={handlePickFile}
+                  disabled={uploading}
+                >
+                  <Text style={styles.filePickerIcon}>{pickedFile ? '✓' : '📂'}</Text>
+                  <View style={styles.filePickerContent}>
+                    <Text style={styles.filePickerText}>
+                      {pickedFile ? `File: ${pickedFile.name}` : `Pick ${formType === 'Audio' ? 'Audio' : 'Video'} File`}
+                    </Text>
+                    {pickedFile && <Text style={styles.filePickerSize}>{Math.round((pickedFile.size || 0) / 1024 / 1024 * 10) / 10} MB</Text>}
+                  </View>
+                </TouchableOpacity>
+                {uploading && (
+                  <View style={styles.uploadingIndicator}>
+                    <ActivityIndicator color={COLORS.gold} size="small" />
+                    <Text style={styles.uploadingText}>Uploading file...</Text>
+                  </View>
+                )}
+              </View>
+
               <FormField label="⏱  DURATION" value={formDuration} onChangeText={setFormDuration} placeholder="e.g. 45 mins" />
 
               {/* Description */}
@@ -754,6 +817,14 @@ const styles = StyleSheet.create({
   dropdownCheck: { fontSize: 14, color: COLORS.gold, fontWeight: FONTS.weights.bold },
   dropdownCustomWrapper: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm },
   dropdownCustomInput: { color: COLORS.text, fontSize: FONTS.sizes.sm, borderBottomWidth: 1, borderBottomColor: COLORS.border, paddingVertical: 4 },
+  filePickerBtn: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md, paddingVertical: SPACING.md },
+  filePickerBtnActive: { backgroundColor: 'rgba(201,168,76,0.1)', borderColor: COLORS.gold },
+  filePickerIcon: { fontSize: 24 },
+  filePickerContent: { flex: 1 },
+  filePickerText: { color: COLORS.text, fontSize: FONTS.sizes.md, fontWeight: FONTS.weights.semibold },
+  filePickerSize: { color: COLORS.textMuted, fontSize: FONTS.sizes.xs, marginTop: SPACING.xs },
+  uploadingIndicator: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, backgroundColor: 'rgba(201,168,76,0.05)', borderRadius: RADIUS.md },
+  uploadingText: { color: COLORS.gold, fontSize: FONTS.sizes.sm, fontWeight: FONTS.weights.semibold },
   submitBtn: { backgroundColor: COLORS.gold, borderRadius: RADIUS.lg, height: 54, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.sm },
   submitBtnDisabled: { opacity: 0.6 },
   submitBtnText: { color: COLORS.background, fontSize: FONTS.sizes.md, fontWeight: FONTS.weights.bold, letterSpacing: 0.5 },

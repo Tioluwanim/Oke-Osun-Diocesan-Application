@@ -18,6 +18,7 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [focusedInput, setFocusedInput] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -77,79 +78,85 @@ export default function LoginScreen({ navigation }) {
         </View>
 
         {/* Form */}
-        <View style={styles.form}>
-          {error ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠ {error}</Text>
+        <View style={styles.formCard}>
+          <View style={styles.form}>
+            {error ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>⚠ {error}</Text>
+              </View>
+            ) : null}
+
+            {/* Email */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email Address</Text>
+              <View style={[styles.inputWrapper, focusedInput === 'email' && styles.inputWrapperFocused]}>
+                <Text style={styles.inputIcon}>✉</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="your@email.com"
+                  placeholderTextColor={COLORS.textMuted}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  onFocus={() => setFocusedInput('email')}
+                  onBlur={() => setFocusedInput(null)}
+                />
+              </View>
             </View>
-          ) : null}
 
-          {/* Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputIcon}>✉</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="your@email.com"
-                placeholderTextColor={COLORS.textMuted}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Password</Text>
+              <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
+                <Text style={styles.inputIcon}>🔒</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your password"
+                  placeholderTextColor={COLORS.textMuted}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  onFocus={() => setFocusedInput('password')}
+                  onBlur={() => setFocusedInput(null)}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Text style={styles.inputIcon}>{showPassword ? '🙈' : '👁'}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          {/* Password */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputIcon}>🔒</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                placeholderTextColor={COLORS.textMuted}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Text style={styles.inputIcon}>{showPassword ? '🙈' : '👁'}</Text>
-              </TouchableOpacity>
+            {/* Forgot password */}
+            <TouchableOpacity style={styles.forgotContainer}>
+              <Text style={styles.forgotText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            {/* Login Button */}
+            <LoadingButton
+              title="Sign In"
+              loading={isLoading}
+              loadingText="Signing In"
+              onPress={handleLogin}
+              style={styles.loginButton}
+            />
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
             </View>
+
+            {/* Register */}
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={() => navigation.navigate('Register')}
+            >
+              <Text style={styles.registerButtonText}>Create New Account</Text>
+            </TouchableOpacity>
           </View>
-
-          {/* Forgot password */}
-          <TouchableOpacity style={styles.forgotContainer}>
-            <Text style={styles.forgotText}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          {/* Login Button */}
-          <LoadingButton
-            title="Sign In"
-            loading={isLoading}
-            loadingText="Signing In"
-            onPress={handleLogin}
-            style={styles.loginButton}
-          />
-
-          {/* Divider */}
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Register */}
-          <TouchableOpacity
-            style={styles.registerButton}
-            onPress={() => navigation.navigate('Register')}
-          >
-            <Text style={styles.registerButtonText}>Create New Account</Text>
-          </TouchableOpacity>
         </View>
 
         <Text style={styles.footer}>Diocese of Oke-Osun · Anglican Communion</Text>
@@ -171,20 +178,20 @@ const styles = StyleSheet.create({
   },
   circle1: {
     position: 'absolute',
-    width: 350,
-    height: 350,
-    borderRadius: 175,
-    backgroundColor: 'rgba(201, 168, 76, 0.04)',
-    top: -80,
-    right: -80,
+    width: 360,
+    height: 360,
+    borderRadius: 180,
+    backgroundColor: 'rgba(201, 168, 76, 0.06)',
+    top: -90,
+    right: -90,
   },
   circle2: {
     position: 'absolute',
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    backgroundColor: 'rgba(201, 168, 76, 0.03)',
-    bottom: 50,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(201, 168, 76, 0.04)',
+    bottom: 40,
     left: -60,
   },
   header: {
@@ -192,13 +199,13 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 96,
+    height: 96,
     marginBottom: SPACING.md,
   },
   welcomeText: {
-    fontSize: FONTS.sizes.xxl,
-    fontWeight: FONTS.weights.bold,
+    fontSize: FONTS.sizes.xxxl,
+    fontWeight: FONTS.weights.black,
     color: COLORS.goldLight,
     letterSpacing: 1,
     marginBottom: SPACING.xs,
@@ -207,17 +214,32 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     color: COLORS.textMuted,
     letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  formCard: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 10,
+    marginBottom: SPACING.lg,
   },
   form: {
     flex: 1,
+    gap: SPACING.md,
   },
   errorBox: {
-    backgroundColor: 'rgba(201, 76, 76, 0.1)',
+    backgroundColor: 'rgba(201, 76, 76, 0.12)',
     borderWidth: 1,
     borderColor: COLORS.red,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.md,
     padding: SPACING.md,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   errorText: {
     color: COLORS.red,
@@ -239,9 +261,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.md,
-    height: 54,
+    height: 56,
+  },
+  inputWrapperFocused: {
+    borderColor: COLORS.gold,
+    backgroundColor: COLORS.surface,
   },
   inputIcon: {
     fontSize: 16,

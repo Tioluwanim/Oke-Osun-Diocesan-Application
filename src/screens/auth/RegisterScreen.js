@@ -25,6 +25,7 @@ export default function RegisterScreen({ navigation }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [focusedInput, setFocusedInput] = useState(null);
   const [selectedRole, setSelectedRole] = useState(ROLES.MEMBER);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -139,12 +140,13 @@ export default function RegisterScreen({ navigation }) {
           </Text>
         </View>
 
-        <View style={styles.form}>
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={[styles.modeChip, mode === 'register' && styles.modeChipActive]}
-              onPress={() => { setMode('register'); setError(''); }}
-            >
+        <View style={styles.formCard}>
+          <View style={styles.form}>
+            <View style={styles.modeRow}>
+              <TouchableOpacity
+                style={[styles.modeChip, mode === 'register' && styles.modeChipActive]}
+                onPress={() => { setMode('register'); setError(''); }}
+              >
               <Text style={[styles.modeChipText, mode === 'register' && styles.modeChipTextActive]}>
                 Create Account
               </Text>
@@ -194,7 +196,7 @@ export default function RegisterScreen({ navigation }) {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Full Name *</Text>
-                <View style={styles.inputWrapper}>
+                <View style={[styles.inputWrapper, focusedInput === 'fullName' && styles.inputWrapperFocused]}>
                   <Text style={styles.inputIcon}>👤</Text>
                   <TextInput
                     style={styles.input}
@@ -203,13 +205,15 @@ export default function RegisterScreen({ navigation }) {
                     value={fullName}
                     onChangeText={setFullName}
                     autoCapitalize="words"
+                    onFocus={() => setFocusedInput('fullName')}
+                    onBlur={() => setFocusedInput(null)}
                   />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Email Address *</Text>
-                <View style={styles.inputWrapper}>
+                <View style={[styles.inputWrapper, focusedInput === 'email' && styles.inputWrapperFocused]}>
                   <Text style={styles.inputIcon}>✉</Text>
                   <TextInput
                     style={styles.input}
@@ -220,13 +224,15 @@ export default function RegisterScreen({ navigation }) {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    onFocus={() => setFocusedInput('email')}
+                    onBlur={() => setFocusedInput(null)}
                   />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Phone Number</Text>
-                <View style={styles.inputWrapper}>
+                <View style={[styles.inputWrapper, focusedInput === 'phone' && styles.inputWrapperFocused]}>
                   <Text style={styles.inputIcon}>📱</Text>
                   <TextInput
                     style={styles.input}
@@ -235,6 +241,8 @@ export default function RegisterScreen({ navigation }) {
                     value={phone}
                     onChangeText={setPhone}
                     keyboardType="phone-pad"
+                    onFocus={() => setFocusedInput('phone')}
+                    onBlur={() => setFocusedInput(null)}
                   />
                 </View>
               </View>
@@ -244,7 +252,7 @@ export default function RegisterScreen({ navigation }) {
           {mode === 'invite' && (
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Invite Code *</Text>
-              <View style={styles.inputWrapper}>
+              <View style={[styles.inputWrapper, focusedInput === 'inviteToken' && styles.inputWrapperFocused]}>
                 <Text style={styles.inputIcon}>🔗</Text>
                 <TextInput
                   style={styles.input}
@@ -254,6 +262,8 @@ export default function RegisterScreen({ navigation }) {
                   onChangeText={setInviteToken}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  onFocus={() => setFocusedInput('inviteToken')}
+                  onBlur={() => setFocusedInput(null)}
                 />
               </View>
             </View>
@@ -261,7 +271,7 @@ export default function RegisterScreen({ navigation }) {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password *</Text>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
               <Text style={styles.inputIcon}>🔒</Text>
               <TextInput
                 style={styles.input}
@@ -271,6 +281,8 @@ export default function RegisterScreen({ navigation }) {
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                onFocus={() => setFocusedInput('password')}
+                onBlur={() => setFocusedInput(null)}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Text style={styles.inputIcon}>{showPassword ? '🙈' : '👁'}</Text>
@@ -280,7 +292,7 @@ export default function RegisterScreen({ navigation }) {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Confirm Password *</Text>
-            <View style={styles.inputWrapper}>
+            <View style={[styles.inputWrapper, focusedInput === 'confirmPassword' && styles.inputWrapperFocused]}>
               <Text style={styles.inputIcon}>🔒</Text>
               <TextInput
                 style={styles.input}
@@ -290,6 +302,8 @@ export default function RegisterScreen({ navigation }) {
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
                 autoCapitalize="none"
+                onFocus={() => setFocusedInput('confirmPassword')}
+                onBlur={() => setFocusedInput(null)}
               />
               <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
                 <Text style={styles.inputIcon}>{showConfirmPassword ? '🙈' : '👁'}</Text>
@@ -318,6 +332,7 @@ export default function RegisterScreen({ navigation }) {
             <Text style={styles.loginButtonText}>Already have an account? Sign In</Text>
           </TouchableOpacity>
         </View>
+      </View>
 
         <Text style={styles.footer}>Diocese of Oke-Osun · Anglican Communion</Text>
       </ScrollView>
@@ -374,9 +389,24 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     color: COLORS.textMuted,
     letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  formCard: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 10,
+    marginBottom: SPACING.lg,
   },
   form: {
     flex: 1,
+    gap: SPACING.md,
   },
   modeRow: {
     flexDirection: 'row',
@@ -388,7 +418,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     paddingVertical: SPACING.sm,
     alignItems: 'center',
   },
@@ -431,16 +461,21 @@ const styles = StyleSheet.create({
   },
   roleCard: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surface2,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     padding: SPACING.sm,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 3,
   },
   roleCardActive: {
     borderColor: COLORS.gold,
-    backgroundColor: 'rgba(201, 168, 76, 0.08)',
+    backgroundColor: 'rgba(201, 168, 76, 0.12)',
   },
   roleIcon: {
     fontSize: 22,
@@ -466,9 +501,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.md,
-    minHeight: 54,
+    minHeight: 56,
+  },
+  inputWrapperFocused: {
+    borderColor: COLORS.gold,
+    backgroundColor: COLORS.surface,
   },
   inputIcon: {
     fontSize: 16,
