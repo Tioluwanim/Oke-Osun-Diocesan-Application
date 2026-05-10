@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 const PROD_API_BASE_URL = 'https://oke-osun-diocesan-application.onrender.com';
-const LOCAL_API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+const LOCAL_API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://127.0.0.1:8000';
 const ENV_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
 
 export const APP_ENV = process.env.EXPO_PUBLIC_APP_ENV?.trim() || (__DEV__ ? 'development' : 'production');
