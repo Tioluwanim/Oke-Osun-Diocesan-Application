@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
-from middleware.auth import require_clergy
+from middleware.auth import require_clergy, require_authenticated
 from models.bible_study import UpdateBibleStudyRequest
 from database import db
 from utils.helpers import format_doc, utcnow, validate_object_id, sanitize_string
@@ -12,10 +12,13 @@ router = APIRouter()
 async def get_bible_studies(
     search: str = Query(None),
     level: str = Query(None),
+    status: str = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
 ):
-    query = {}
+    query: dict = {"status": "published"}
+    if status:
+        query["status"] = status
     if level: query["level"] = level
     if search:
         query["$or"] = [
@@ -43,7 +46,7 @@ async def get_bible_study(study_id: str):
 @router.post("/")
 async def create_bible_study(
     request: Request,
-    current_user: dict = Depends(require_clergy)
+    current_user: dict = Depends(require_authenticated)
 ):
     data, file = await parse_form_or_json(
         request,
@@ -53,6 +56,9 @@ async def create_bible_study(
         raise HTTPException(status_code=400, detail="Title and book are required")
     if file:
         data["url"] = upload_file_to_gcs(file, "bible-studies")
+
+    is_privileged = current_user["role"] in ("clergy", "admin")
+    status = "published" if is_privileged else "pending"
 
     study = {
         "title": sanitize_string(data["title"]),
@@ -64,6 +70,8 @@ async def create_bible_study(
         "url": data.get("url"),
         "uploadedBy": current_user["email"],
         "uploaderName": current_user["fullName"],
+        "uploaderRole": current_user["role"],
+        "status": status,
         "isNew": True,
         "createdAt": utcnow(),
         "updatedAt": utcnow(),
@@ -71,7 +79,33 @@ async def create_bible_study(
     result = await db.bible_studies.insert_one(study)
     study["id"] = str(result.inserted_id)
     study.pop("_id", None)
-    return {"message": "Bible study created successfully", "bible_study": study}
+    return {"message": "Bible study created successfully" if is_privileged else "Bible study submitted for review", "bible_study": study}
+
+
+@router.patch("/{study_id}/approve")
+async def approve_bible_study(study_id: str, current_user: dict = Depends(require_clergy)):
+    if current_user["role"] not in ("clergy", "admin"):
+        raise HTTPException(status_code=403, detail="Only clergy or admin can approve bible studies")
+    oid = validate_object_id(study_id, "Bible Study ID")
+    existing = await db.bible_studies.find_one({"_id": oid})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Bible study not found")
+    await db.bible_studies.update_one({"_id": oid}, {"$set": {"status": "published", "updatedAt": utcnow()}})
+    updated = await db.bible_studies.find_one({"_id": oid})
+    return {"message": "Bible study approved and published", "bible_study": format_doc(updated)}
+
+
+@router.patch("/{study_id}/reject")
+async def reject_bible_study(study_id: str, current_user: dict = Depends(require_clergy)):
+    if current_user["role"] not in ("clergy", "admin"):
+        raise HTTPException(status_code=403, detail="Only clergy or admin can reject bible studies")
+    oid = validate_object_id(study_id, "Bible Study ID")
+    existing = await db.bible_studies.find_one({"_id": oid})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Bible study not found")
+    await db.bible_studies.update_one({"_id": oid}, {"$set": {"status": "rejected", "updatedAt": utcnow()}})
+    updated = await db.bible_studies.find_one({"_id": oid})
+    return {"message": "Bible study rejected", "bible_study": format_doc(updated)}
 
 @router.patch("/{study_id}")
 async def update_bible_study(

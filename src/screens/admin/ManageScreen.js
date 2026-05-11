@@ -493,7 +493,12 @@ export default function ManageScreen({ navigation }) {
   // ── Upload Resource ──
   const handlePickResourceFile = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
+      const typeMap = {
+        magazine:   ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        bible_study:['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        document:   ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '*/*'],
+      };
+      const result = await DocumentPicker.getDocumentAsync({ type: typeMap[resourceType] || ['*/*'] });
       if (result.canceled) return;
       const file = result.assets[0];
       setResPickedFile(file);
@@ -1188,6 +1193,39 @@ export default function ManageScreen({ navigation }) {
 
               <FormField label="🔗  FILE/URL LINK" value={resUrl} onChangeText={setResUrl} placeholder="https://drive.google.com/..." keyboardType="url" />
 
+              {/* File Picker */}
+              <View style={styles.formField}>
+                <Text style={styles.formLabel}>📁  OR UPLOAD FILE DIRECTLY</Text>
+                <TouchableOpacity
+                  style={[styles.filePickerBtn, resPickedFile && styles.filePickerBtnActive]}
+                  onPress={handlePickResourceFile}
+                  disabled={resUploading}
+                >
+                  <Text style={styles.filePickerIcon}>{resPickedFile ? '✓' : '📂'}</Text>
+                  <View style={styles.filePickerContent}>
+                    <Text style={styles.filePickerText}>
+                      {resPickedFile ? `File: ${resPickedFile.name}` : 'Pick PDF, Word, or any file'}
+                    </Text>
+                    {resPickedFile && (
+                      <Text style={styles.filePickerSize}>
+                        {Math.round((resPickedFile.size || 0) / 1024 / 1024 * 10) / 10} MB
+                      </Text>
+                    )}
+                  </View>
+                  {resPickedFile && (
+                    <TouchableOpacity onPress={() => setResPickedFile(null)}>
+                      <Text style={{ color: COLORS.textMuted, fontSize: 13 }}>✕</Text>
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+                {resUploading && (
+                  <View style={styles.uploadingIndicator}>
+                    <ActivityIndicator color={COLORS.teal} size="small" />
+                    <Text style={[styles.uploadingText, { color: COLORS.teal }]}>Uploading file...</Text>
+                  </View>
+                )}
+              </View>
+
               <TouchableOpacity style={[styles.submitBtn, { backgroundColor: COLORS.teal }, savingResource && { opacity: 0.6 }]} onPress={handleUploadResource} disabled={savingResource}>
                 <Text style={styles.submitBtnText}>{savingResource ? '⏳  Uploading...' : '⬆️  Upload Resource'}</Text>
               </TouchableOpacity>
@@ -1434,6 +1472,14 @@ const styles = StyleSheet.create({
   formLabel: { fontSize: FONTS.sizes.xs, fontWeight: FONTS.weights.bold, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: SPACING.xs },
   formInput: { backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, color: COLORS.text, fontSize: FONTS.sizes.md, height: 50 },
   submitBtn: { borderRadius: RADIUS.lg, height: 54, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.sm },
+  filePickerBtn: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md, paddingVertical: SPACING.md },
+  filePickerBtnActive: { backgroundColor: 'rgba(76,201,168,0.1)', borderColor: COLORS.teal },
+  filePickerIcon: { fontSize: 24 },
+  filePickerContent: { flex: 1 },
+  filePickerText: { color: COLORS.text, fontSize: FONTS.sizes.md, fontWeight: FONTS.weights.semibold },
+  filePickerSize: { color: COLORS.textMuted, fontSize: FONTS.sizes.xs, marginTop: SPACING.xs },
+  uploadingIndicator: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, backgroundColor: 'rgba(76,201,168,0.05)', borderRadius: RADIUS.md },
+  uploadingText: { fontSize: FONTS.sizes.sm, fontWeight: FONTS.weights.semibold },
   submitBtnText: { color: COLORS.background, fontSize: FONTS.sizes.md, fontWeight: FONTS.weights.bold, letterSpacing: 0.5 },
   cancelBtn: { height: 48, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg },
   cancelBtnText: { color: COLORS.textMuted, fontSize: FONTS.sizes.md, fontWeight: FONTS.weights.semibold },

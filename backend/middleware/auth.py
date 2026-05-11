@@ -30,3 +30,7 @@ async def require_clergy(authorization: str = Header(...)) -> dict:
         return user
     else:
         raise HTTPException(status_code=403, detail="Clergy access required")
+
+async def require_authenticated(authorization: str = Header(...)) -> dict:
+    """Any active user (member, clergy, admin) can pass this gate."""
+    return await get_current_user(authorization)

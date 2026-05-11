@@ -1,11 +1,11 @@
 import { Platform } from 'react-native';
 
 const PROD_API_BASE_URL = 'https://oke-osun-diocesan-application.onrender.com';
-const LOCAL_API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://127.0.0.1:8000';
+const LOCAL_API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
 const ENV_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
 
 export const APP_ENV = process.env.EXPO_PUBLIC_APP_ENV?.trim() || (__DEV__ ? 'development' : 'production');
-export const API_BASE_URL = ENV_API_BASE_URL || (__DEV__ ? LOCAL_API_BASE_URL : PROD_API_BASE_URL);
+export const API_BASE_URL = PROD_API_BASE_URL;
 
 export const API_ROUTES = {
   register:      `${API_BASE_URL}/auth/register`,
@@ -31,11 +31,17 @@ export const API_ROUTES = {
   live:          `${API_BASE_URL}/live`,
   liveToggle:    `${API_BASE_URL}/live/toggle`,
   magazines:     `${API_BASE_URL}/magazines`,
-  magazineById:  (id) => `${API_BASE_URL}/magazines/${id}`,
-  bibleStudies:  `${API_BASE_URL}/bible-studies`,
+  magazineById:       (id) => `${API_BASE_URL}/magazines/${id}`,
+  magazineApprove:    (id) => `${API_BASE_URL}/magazines/${id}/approve`,
+  magazineReject:     (id) => `${API_BASE_URL}/magazines/${id}/reject`,
+  bibleStudies:       `${API_BASE_URL}/bible-studies`,
+  bibleStudyApprove:  (id) => `${API_BASE_URL}/bible-studies/${id}/approve`,
+  bibleStudyReject:   (id) => `${API_BASE_URL}/bible-studies/${id}/reject`,
   bibleStudyById:(id) => `${API_BASE_URL}/bible-studies/${id}`,
   documents:     `${API_BASE_URL}/documents`,
-  documentById:  (id) => `${API_BASE_URL}/documents/${id}`,
+  documentById:      (id) => `${API_BASE_URL}/documents/${id}`,
+  documentApprove:   (id) => `${API_BASE_URL}/documents/${id}/approve`,
+  documentReject:    (id) => `${API_BASE_URL}/documents/${id}/reject`,
   auditLogs:     `${API_BASE_URL}/admin/audit-logs`,
   uploads:       `${API_BASE_URL}/uploads`,
 };

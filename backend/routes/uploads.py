@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends
-from middleware.auth import require_clergy
+from middleware.auth import require_authenticated
 from utils.gcs import upload_file_to_gcs
 
 router = APIRouter()
@@ -8,7 +8,7 @@ router = APIRouter()
 async def upload_file(
     file: UploadFile = File(...),
     folder: str = Form("uploads"),
-    current_user: dict = Depends(require_clergy),
+    current_user: dict = Depends(require_authenticated),
 ):
     url = upload_file_to_gcs(file, folder)
     return {"message": "File uploaded successfully", "url": url}

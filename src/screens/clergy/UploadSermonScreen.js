@@ -22,8 +22,9 @@ import useOptimisticUpdate from '../../hooks/useOptimisticUpdate';
 import { uploadFileToGCS } from '../../lib/fileUpload';
 
 const TYPE_CONFIG = {
-  Audio: { color: COLORS.gold, bg: 'rgba(201,168,76,0.1)', icon: '🎙️' },
-  Video: { color: COLORS.teal, bg: 'rgba(76,201,168,0.1)', icon: '📹' },
+  Audio:    { color: COLORS.gold,    bg: 'rgba(201,168,76,0.1)', icon: '🎙️' },
+  Video:    { color: COLORS.teal,    bg: 'rgba(76,201,168,0.1)', icon: '📹' },
+  Document: { color: '#a78bfa',      bg: 'rgba(167,139,250,0.1)', icon: '📄' },
 };
 
 const STATUS_CONFIG = {
@@ -31,7 +32,7 @@ const STATUS_CONFIG = {
   draft:     { color: COLORS.textMuted, bg: 'rgba(122,117,104,0.1)', label: '○ Draft'     },
 };
 
-const FILTERS = ['All', 'Audio', 'Video', 'Draft'];
+const FILTERS = ['All', 'Audio', 'Video', 'Document', 'Draft'];
 
 export default function UploadSermonScreen({ navigation }) {
   const { user, token } = useAuth();
@@ -118,8 +119,13 @@ export default function UploadSermonScreen({ navigation }) {
   // ── Pick file ──
   const handlePickFile = async () => {
     try {
+      const typeMap = {
+        Video:    ['video/*'],
+        Audio:    ['audio/*'],
+        Document: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      };
       const result = await DocumentPicker.getDocumentAsync({
-        type: formType === 'Video' ? ['video/*'] : ['audio/*'],
+        type: typeMap[formType] || ['audio/*'],
       });
       if (result.canceled) return;
       const file = result.assets[0];
@@ -339,9 +345,10 @@ export default function UploadSermonScreen({ navigation }) {
             activeOpacity={0.75}
           >
             <Text style={[styles.filterChipText, activeFilter === f && styles.filterChipTextActive]}>
-              {f === 'Audio' ? '🎙️ Audio' :
-               f === 'Video' ? '📹 Video' :
-               f === 'Draft' ? '📝 Drafts' : '📋 All'}
+              {f === 'Audio'    ? '🎙️ Audio' :
+               f === 'Video'    ? '📹 Video' :
+               f === 'Document' ? '📄 Docs' :
+               f === 'Draft'    ? '📝 Drafts' : '📋 All'}
             </Text>
           </TouchableOpacity>
         ))}
@@ -449,7 +456,7 @@ export default function UploadSermonScreen({ navigation }) {
               {/* Type Selector */}
               <Text style={styles.formLabel}>📂  TYPE</Text>
               <View style={styles.typeRow}>
-                {['Audio', 'Video'].map((t) => (
+                {['Audio', 'Video', 'Document'].map((t) => (
                   <TouchableOpacity
                     key={t}
                     style={[styles.typeChip, formType === t && { backgroundColor: TYPE_CONFIG[t].bg, borderColor: TYPE_CONFIG[t].color }]}
@@ -501,10 +508,18 @@ export default function UploadSermonScreen({ navigation }) {
               </View>
 
               <FormField
-                label={`${formType === 'Audio' ? '🎵' : '📹'}  ${formType.toUpperCase()} LINK *`}
+                label={
+                  formType === 'Audio'    ? '🎵  AUDIO LINK *' :
+                  formType === 'Video'    ? '📹  VIDEO LINK *' :
+                                            '🔗  DOCUMENT LINK *'
+                }
                 value={formLink}
                 onChangeText={setFormLink}
-                placeholder={formType === 'Audio' ? 'e.g. https://soundcloud.com/...' : 'e.g. https://youtube.com/...'}
+                placeholder={
+                  formType === 'Audio'    ? 'e.g. https://soundcloud.com/...' :
+                  formType === 'Video'    ? 'e.g. https://youtube.com/...' :
+                                            'e.g. https://drive.google.com/...'
+                }
                 keyboardType="url"
               />
 
@@ -519,7 +534,10 @@ export default function UploadSermonScreen({ navigation }) {
                   <Text style={styles.filePickerIcon}>{pickedFile ? '✓' : '📂'}</Text>
                   <View style={styles.filePickerContent}>
                     <Text style={styles.filePickerText}>
-                      {pickedFile ? `File: ${pickedFile.name}` : `Pick ${formType === 'Audio' ? 'Audio' : 'Video'} File`}
+                      {pickedFile ? `File: ${pickedFile.name}` :
+                     formType === 'Audio'    ? 'Pick Audio File' :
+                     formType === 'Video'    ? 'Pick Video File' :
+                                               'Pick PDF / Word Doc'}
                     </Text>
                     {pickedFile && <Text style={styles.filePickerSize}>{Math.round((pickedFile.size || 0) / 1024 / 1024 * 10) / 10} MB</Text>}
                   </View>

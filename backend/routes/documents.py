@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-from middleware.auth import require_clergy, require_admin
+from middleware.auth import require_clergy, require_admin, require_authenticated
 from database import db
 from bson import ObjectId
 from datetime import datetime
@@ -31,14 +31,17 @@ def format_doc(doc: dict) -> dict:
     return doc
 
 @router.get("/")
-async def get_documents():
-    docs = await db.documents.find().sort("createdAt", -1).to_list(length=100)
+async def get_documents(status: str = None):
+    query: dict = {"status": "published"}
+    if status:
+        query["status"] = status
+    docs = await db.documents.find(query).sort("createdAt", -1).to_list(length=100)
     return {"documents": [format_doc(d) for d in docs]}
 
 @router.post("/")
 async def create_document(
     request: Request,
-    current_user: dict = Depends(require_clergy)
+    current_user: dict = Depends(require_authenticated)
 ):
     data, file = await parse_form_or_json(request, ["title", "category", "size", "date", "url"])
     if not data.get("title"):
@@ -48,20 +51,55 @@ async def create_document(
         if not data.get("size"):
             data["size"] = file.filename
 
+    is_privileged = current_user["role"] in ("clergy", "admin")
+    status = "published" if is_privileged else "pending"
+
     doc = {
         "title": data["title"],
         "category": data.get("category") or "Administration",
         "size": data.get("size"),
         "date": data.get("date"),
         "url": data.get("url"),
+        "uploadedBy": current_user["email"],
+        "uploaderName": current_user["fullName"],
+        "uploaderRole": current_user["role"],
+        "status": status,
+        "createdAt": datetime.utcnow().isoformat(),
     }
-    doc["uploadedBy"] = current_user["email"]
-    doc["uploaderName"] = current_user["fullName"]
-    doc["createdAt"] = datetime.utcnow().isoformat()
     result = await db.documents.insert_one(doc)
     doc["id"] = str(result.inserted_id)
     doc.pop("_id", None)
-    return {"message": "Document uploaded successfully", "document": doc}
+    return {"message": "Document uploaded successfully" if is_privileged else "Document submitted for review", "document": doc}
+
+
+@router.patch("/{doc_id}/approve")
+async def approve_document(doc_id: str, current_user: dict = Depends(require_clergy)):
+    if current_user["role"] not in ("clergy", "admin"):
+        raise HTTPException(status_code=403, detail="Only clergy or admin can approve documents")
+    try:
+        existing = await db.documents.find_one({"_id": ObjectId(doc_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID")
+    if not existing:
+        raise HTTPException(status_code=404, detail="Document not found")
+    await db.documents.update_one({"_id": ObjectId(doc_id)}, {"$set": {"status": "published"}})
+    updated = await db.documents.find_one({"_id": ObjectId(doc_id)})
+    return {"message": "Document approved and published", "document": format_doc(updated)}
+
+
+@router.patch("/{doc_id}/reject")
+async def reject_document(doc_id: str, current_user: dict = Depends(require_clergy)):
+    if current_user["role"] not in ("clergy", "admin"):
+        raise HTTPException(status_code=403, detail="Only clergy or admin can reject documents")
+    try:
+        existing = await db.documents.find_one({"_id": ObjectId(doc_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID")
+    if not existing:
+        raise HTTPException(status_code=404, detail="Document not found")
+    await db.documents.update_one({"_id": ObjectId(doc_id)}, {"$set": {"status": "rejected"}})
+    updated = await db.documents.find_one({"_id": ObjectId(doc_id)})
+    return {"message": "Document rejected", "document": format_doc(updated)}
 
 @router.patch("/{doc_id}")
 async def update_document(
