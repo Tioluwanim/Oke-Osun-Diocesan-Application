@@ -4,7 +4,7 @@ from utils.gcs import upload_file_to_gcs
 
 router = APIRouter()
 
-@router.post("/")
+@router.post("")
 async def upload_file(
     file: UploadFile = File(...),
     folder: str = Form("uploads"),
