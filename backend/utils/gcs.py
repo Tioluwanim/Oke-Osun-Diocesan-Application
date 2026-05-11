@@ -13,29 +13,49 @@ def _get_bucket_name() -> str:
 
 
 def _get_storage_client() -> storage.Client:
+    creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
+    if not creds_path:
+        raise HTTPException(
+            status_code=500,
+            detail="GOOGLE_APPLICATION_CREDENTIALS is not configured"
+        )
+
     try:
-        return storage.Client()
+        return storage.Client.from_service_account_json(creds_path)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Failed to initialize Google Cloud Storage client: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to initialize GCS client: {exc}"
+        )
 
 
 def upload_file_to_gcs(file: UploadFile, folder: str = "uploads") -> str:
     bucket_name = _get_bucket_name()
-    try:
-        client = _get_storage_client()
-    except HTTPException:
-        raise
+    client = _get_storage_client()
+
     bucket = client.bucket(bucket_name)
-    extension = "" if not file.filename else os.path.splitext(file.filename)[1]
+
+    extension = os.path.splitext(file.filename)[1] if file.filename else ""
     filename = f"{uuid4().hex}{extension}"
     blob_name = f"{folder.strip('/')}/{filename}"
+
     blob = bucket.blob(blob_name)
+
     try:
-        blob.upload_from_file(file.file, content_type=file.content_type or "application/octet-stream")
+        blob.upload_from_file(
+            file.file,
+            content_type=file.content_type or "application/octet-stream"
+        )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Failed to upload file to GCS: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload file to GCS: {exc}"
+        )
+
+    # Optional public access (only if bucket allows it)
     try:
         blob.make_public()
+        return blob.public_url
     except Exception:
-        pass
-    return blob.public_url
+        return f"gs://{bucket_name}/{blob_name}"
