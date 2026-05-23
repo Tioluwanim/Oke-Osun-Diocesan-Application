@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from datetime import datetime, date
+from pydantic import BaseModel, Field, validator
 from typing import Optional, Literal
 
 class CreateEventRequest(BaseModel):
@@ -11,6 +12,16 @@ class CreateEventRequest(BaseModel):
     category: Literal["Service", "Meeting", "Conference", "Outreach", "Youth", "Other"] = "Service"
     isAllParishes: bool = False
 
+    @validator("date")
+    def validate_date(cls, value: str) -> str:
+        try:
+            event_date = datetime.strptime(value, "%Y-%m-%d").date()
+        except ValueError:
+            raise ValueError("Date must be in YYYY-MM-DD format")
+        if event_date < date.today():
+            raise ValueError("Event date must be today or in the future")
+        return value
+
 class UpdateEventRequest(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
@@ -18,5 +29,17 @@ class UpdateEventRequest(BaseModel):
     time: Optional[str] = None
     location: Optional[str] = None
     parish: Optional[str] = None
-    category: Optional[str] = None
+    category: Optional[Literal["Service", "Meeting", "Conference", "Outreach", "Youth", "Other"]]
     isAllParishes: Optional[bool] = None
+
+    @validator("date")
+    def validate_date(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        try:
+            event_date = datetime.strptime(value, "%Y-%m-%d").date()
+        except ValueError:
+            raise ValueError("Date must be in YYYY-MM-DD format")
+        if event_date < date.today():
+            raise ValueError("Event date must be today or in the future")
+        return value

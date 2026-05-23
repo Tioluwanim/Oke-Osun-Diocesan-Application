@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {
   View,
@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Animated,
 } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../constants/theme';
+import AppIcon from '../components/ui/AppIcon';
 
 import HomeScreen from '../screens/main/HomeScreen';
 import EventsScreen from '../screens/main/EventsScreen';
@@ -30,21 +32,43 @@ const TabBarButton = ({ children, onPress, accessibilityState }) => {
   );
 };
 
-const TabIcon = ({ emoji, label, focused }) => (
-  <View style={styles.tabIconContainer}>
-    <View style={[styles.tabIconWrapper, focused && styles.tabIconWrapperActive]}>
-      <Text style={[styles.tabEmoji, { opacity: focused ? 1 : 0.5 }]}>{emoji}</Text>
+const TabIcon = ({ icon, label, focused }) => {
+  const progress = useRef(new Animated.Value(focused ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(progress, {
+      toValue: focused ? 1 : 0,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 90,
+    }).start();
+  }, [focused, progress]);
+
+  return (
+    <View style={styles.tabIconContainer}>
+      <Animated.View
+        style={[
+          styles.activePill,
+          {
+            opacity: progress,
+            transform: [{ scaleX: progress.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] }) }],
+          },
+        ]}
+      />
+      <View style={[styles.tabIconWrapper, focused && styles.tabIconWrapperActive]}>
+        <AppIcon name={icon} size={22} color={focused ? COLORS.gold : COLORS.textMuted} />
+      </View>
+      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>{label}</Text>
     </View>
-    <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>{label}</Text>
-  </View>
-);
+  );
+};
 
 const TABS = [
-  { name: 'Home', emoji: '⛪', label: 'Home', component: HomeScreen },
-  { name: 'Events', emoji: '📅', label: 'Events', component: EventsScreen },
-  { name: 'Live', emoji: '📺', label: 'Live', component: LiveScreen },
-  { name: 'Resources', emoji: '📖', label: 'Resources', component: ResourcesScreen },
-  { name: 'Profile', emoji: '👤', label: 'Profile', component: ProfileScreen },
+  { name: 'Home', icon: 'home', label: 'Home', component: HomeScreen },
+  { name: 'Events', icon: 'calendar', label: 'Events', component: EventsScreen },
+  { name: 'Live', icon: 'live', label: 'Live', component: LiveScreen },
+  { name: 'Resources', icon: 'resources', label: 'Resources', component: ResourcesScreen },
+  { name: 'Profile', icon: 'person', label: 'Profile', component: ProfileScreen },
 ];
 
 export default function MemberTabs() {
@@ -64,7 +88,7 @@ export default function MemberTabs() {
           options={{
             tabBarButton: (props) => <TabBarButton {...props} />,
             tabBarIcon: ({ focused }) => (
-              <TabIcon emoji={tab.emoji} label={tab.label} focused={focused} />
+              <TabIcon icon={tab.icon} label={tab.label} focused={focused} />
             ),
           }}
         />
@@ -107,6 +131,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    minWidth: 54,
+  },
+  activePill: {
+    position: 'absolute',
+    top: 0,
+    width: 42,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: COLORS.gold,
   },
   tabIconWrapper: {
     width: 44,
@@ -119,7 +152,6 @@ const styles = StyleSheet.create({
   tabIconWrapperActive: {
     backgroundColor: COLORS.softGold,
   },
-  tabEmoji: { fontSize: 22 },
   tabLabel: {
     fontSize: 10,
     fontWeight: '600',

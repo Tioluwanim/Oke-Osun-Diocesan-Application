@@ -4,8 +4,8 @@ export const uploadFileToGCS = async (file, token, folder = 'uploads') => {
   const formData = new FormData();
   formData.append('file', {
     uri: file.uri,
-    name: file.name,
-    type: file.mimeType || 'application/octet-stream',
+    name: file.name || file.fileName || `upload-${Date.now()}`,
+    type: file.mimeType || file.type || 'application/octet-stream',
   });
   formData.append('folder', folder);
 

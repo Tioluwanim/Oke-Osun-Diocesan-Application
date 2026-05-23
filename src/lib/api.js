@@ -1,14 +1,94 @@
 import { API_ROUTES } from '../constants/config';
 
-export async function fetchJson(url, options) {
-  const response = await fetch(url, options);
-  const data = await response.json().catch(() => ({}));
+let authHandlers = {
+  getAccessToken: null,
+  getRefreshToken: null,
+  updateTokens: null,
+  onLogout: null,
+};
+let refreshPromise = null;
 
-  if (!response.ok) {
-    throw new Error(data?.detail || 'Request failed');
+export const registerAuthHandlers = ({ getAccessToken, getRefreshToken, updateTokens, onLogout }) => {
+  authHandlers = {
+    getAccessToken,
+    getRefreshToken,
+    updateTokens,
+    onLogout,
+  };
+};
+
+const DEFAULT_TIMEOUT_MS = 15000;
+
+async function requestJson(url, options = {}) {
+  const { retry, timeoutMs, ...fetchOptions } = options;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs || DEFAULT_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...fetchOptions, signal: controller.signal });
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+    throw new Error('Network request failed. Check your connection.');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function refreshSession() {
+  const refreshToken = authHandlers.getRefreshToken && await authHandlers.getRefreshToken();
+  if (!refreshToken) {
+    throw new Error('Session expired');
   }
 
-  return data;
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const response = await requestJson(API_ROUTES.refresh, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (authHandlers.onLogout) {
+          await authHandlers.onLogout();
+        }
+        throw new Error(data?.detail || 'Unauthorized');
+      }
+      if (authHandlers.updateTokens) {
+        await authHandlers.updateTokens(data.accessToken || data.token, data.refreshToken);
+      }
+      return data;
+    })().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
+}
+
+export async function fetchJson(url, options) {
+  const response = await requestJson(url, options);
+  const data = await response.json().catch(() => ({}));
+
+  if (response.ok) {
+    return data;
+  }
+
+  if (response.status === 401 && !options?.retry && authHandlers.getRefreshToken && authHandlers.updateTokens) {
+    try {
+      const refreshed = await refreshSession();
+      const newAccessToken = refreshed?.accessToken || refreshed?.token || await authHandlers.getAccessToken?.();
+      if (newAccessToken) {
+        const headers = { ...(options?.headers || {}), Authorization: `Bearer ${newAccessToken}` };
+        return fetchJson(url, { ...options, headers, retry: true });
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  throw new Error(data?.detail || response.statusText || 'Request failed');
 }
 
 export const authHeaders = (token) => ({
@@ -73,10 +153,25 @@ export const authApi = {
     headers: authHeaders(),
     body: JSON.stringify(payload),
   }),
+  refresh: async (refreshToken) => fetchJson(API_ROUTES.refresh, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  }),
+  logout: async (refreshToken) => fetchJson(API_ROUTES.logout, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  }),
   completeInvite: async (payload) => fetchJson(API_ROUTES.completeInvite, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(payload),
+  }),
+  approvalStatus: async (email) => fetchJson(API_ROUTES.approvalStatus, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ email }),
   }),
   updateProfile: async (payload, token) => fetchJson(API_ROUTES.updateProfile, {
     method: 'PATCH',
@@ -91,6 +186,7 @@ export const authApi = {
 };
 
 export const userApi = {
+  fetchMe: async (token) => fetchJson(API_ROUTES.currentUser, { headers: authHeaders(token) }),
   fetchParishes: async () => queryFns.parishes(),
   fetchMyParish: async (token) => fetchJson(API_ROUTES.myParish, { headers: authHeaders(token) }),
   fetchMyParishMembers: async (token) => fetchJson(API_ROUTES.myParishMembers, { headers: authHeaders(token) }),
@@ -131,7 +227,10 @@ export const sermonApi = {
 };
 
 export const eventApi = {
-  fetchEvents: async (query = '') => fetchJson(`${API_ROUTES.events}${query}`),
+  fetchEvents: async (page = 1, query = '') => {
+    const separator = query && query.startsWith('?') ? '&' : query ? '?' : '';
+    return fetchJson(`${API_ROUTES.events}?page=${page}${separator}${query}`);
+  },
   fetchEvent: async (id) => fetchJson(API_ROUTES.eventById(id)),
   createEvent: async (payload, token) => fetchJson(API_ROUTES.events, { method: 'POST', headers: authHeaders(token), body: JSON.stringify(payload) }),
   updateEvent: async (id, payload, token) => fetchJson(API_ROUTES.eventById(id), { method: 'PATCH', headers: authHeaders(token), body: JSON.stringify(payload) }),

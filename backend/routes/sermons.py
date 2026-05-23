@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
+from pymongo import ReturnDocument
 from middleware.auth import require_clergy
 from models.sermon import UpdateSermonRequest
 from database import db
@@ -41,11 +42,13 @@ async def get_sermons(
 @router.get("/{sermon_id}")
 async def get_sermon(sermon_id: str):
     oid = validate_object_id(sermon_id, "Sermon ID")
-    sermon = await db.sermons.find_one({"_id": oid})
+    sermon = await db.sermons.find_one_and_update(
+        {"_id": oid},
+        {"$inc": {"views": 1}},
+        return_document=ReturnDocument.AFTER,
+    )
     if not sermon:
         raise HTTPException(status_code=404, detail="Sermon not found")
-    await db.sermons.update_one({"_id": oid}, {"$inc": {"views": 1}})
-    sermon["views"] = sermon.get("views", 0) + 1
     return {"sermon": format_doc(sermon)}
 
 

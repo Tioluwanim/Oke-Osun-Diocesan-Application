@@ -17,18 +17,19 @@ import { useQuery } from '@tanstack/react-query';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import SkeletonList from '../../components/ui/SkeletonList';
 import EmptyState from '../../components/ui/EmptyState';
+import AppIcon from '../../components/ui/AppIcon';
 import { queryFns, queryKeys } from '../../lib/api';
 
 const { width } = Dimensions.get('window');
 
 const FILTERS = [
-  { label: 'All', icon: '✦' },
-  { label: 'Service', icon: '⛪' },
-  { label: 'Conference', icon: '🏛️' },
-  { label: 'Meeting', icon: '🤝' },
-  { label: 'Outreach', icon: '🌍' },
-  { label: 'Youth', icon: '✨' },
-  { label: 'Other', icon: '✳️' },
+  { label: 'All', icon: 'all' },
+  { label: 'Service', icon: 'church' },
+  { label: 'Conference', icon: 'calendar' },
+  { label: 'Meeting', icon: 'people-outline' },
+  { label: 'Outreach', icon: 'send' },
+  { label: 'Youth', icon: 'star' },
+  { label: 'Other', icon: 'menu' },
 ];
 
 const TYPE_CONFIG = {
@@ -70,7 +71,7 @@ export default function EventsScreen() {
   const typeConfig = (type) => TYPE_CONFIG[type] || { color: COLORS.gold, bg: 'rgba(201,168,76,0.1)' };
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
+    if (!dateStr) return '-';
     try {
       const d = new Date(dateStr);
       return d.toDateString();
@@ -87,11 +88,11 @@ export default function EventsScreen() {
         <View>
           <Text style={styles.headerTitle}>Events</Text>
           <Text style={styles.headerSubtitle}>
-            Diocese of Oke-Osun · {filteredEvents.length} upcoming
+            Diocese of Oke-Osun - {filteredEvents.length} upcoming
           </Text>
         </View>
         <View style={styles.headerIcon}>
-          <Text style={styles.headerIconText}>📅</Text>
+          <AppIcon name="calendar" size={22} color={COLORS.gold} />
         </View>
       </View>
 
@@ -116,7 +117,7 @@ export default function EventsScreen() {
           <View>
             <View style={styles.searchContainer}>
               <View style={styles.searchWrapper}>
-                <Text style={styles.searchIcon}>🔍</Text>
+                <AppIcon name="search" size={17} color={COLORS.textMuted} />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search events, location..."
@@ -126,7 +127,7 @@ export default function EventsScreen() {
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.searchClearBtn}>
-                    <Text style={styles.searchClear}>✕</Text>
+                    <AppIcon name="close" size={14} color={COLORS.textMuted} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -147,7 +148,7 @@ export default function EventsScreen() {
                       onPress={() => setActiveFilter(filter.label)}
                       activeOpacity={0.75}
                     >
-                      <Text style={styles.filterChipIcon}>{filter.icon}</Text>
+                      <AppIcon name={filter.icon} size={13} color={active ? COLORS.background : COLORS.textMuted} />
                       <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
                         {filter.label}
                       </Text>
@@ -166,7 +167,7 @@ export default function EventsScreen() {
             {!isLoading && error && (
               <View style={styles.listContent}>
                 <EmptyState
-                  icon="📭"
+                  icon="calendar"
                   title="Unable to load events"
                   description="Please check your connection and try again."
                   actionLabel="Retry"
@@ -196,7 +197,7 @@ export default function EventsScreen() {
                   </View>
                   {event.isAllParishes && (
                     <View style={styles.allParishesBadge}>
-                      <Text style={styles.allParishesBadgeText}>🌐 All Parishes</Text>
+                      <Text style={styles.allParishesBadgeText}>All Parishes</Text>
                     </View>
                   )}
                   <Text style={styles.eventCardNumber}>
@@ -207,21 +208,21 @@ export default function EventsScreen() {
                 <Text style={styles.eventTitle}>{event.title}</Text>
 
                 <View style={styles.eventMetaGrid}>
-                  <EventMeta icon="📅" text={`${formatDate(event.date)}${event.time ? `  ·  ${event.time}` : ''}`} />
-                  {event.location && <EventMeta icon="📍" text={event.location} lines={1} />}
-                  {event.creatorName && <EventMeta icon="👤" text={event.creatorName} lines={1} />}
+                  <EventMeta icon="calendar" text={`${formatDate(event.date)}${event.time ? `  -  ${event.time}` : ''}`} />
+                  {event.location && <EventMeta icon="location-outline" text={event.location} lines={1} />}
+                  {event.creatorName && <EventMeta icon="person" text={event.creatorName} lines={1} />}
                 </View>
 
                 <View style={styles.eventFooter}>
                   <View style={styles.attendingRow}>
-                    <Text style={styles.attendingDot}>•</Text>
+                    <View style={styles.attendingDot} />
                     <Text style={styles.attendingText}>
-                      {event.createdAt ? formatDate(event.createdAt) : '—'}
+                      {event.createdAt ? formatDate(event.createdAt) : '-'}
                     </Text>
                   </View>
                   <View style={[styles.categoryPill, { backgroundColor: config.bg, borderColor: config.color }]}>
                     <Text style={[styles.categoryPillText, { color: config.color }]}>
-                      View Details ›
+                      View Details
                     </Text>
                   </View>
                 </View>
@@ -231,7 +232,7 @@ export default function EventsScreen() {
         }}
         ListEmptyComponent={!isLoading && !error ? (
           <EmptyState
-            icon="📭"
+            icon="calendar"
             title="No events found"
             description={searchQuery ? 'Try a different search' : 'No events match this filter'}
             actionLabel="Reset Filters"
@@ -251,7 +252,7 @@ export default function EventsScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <TouchableOpacity style={styles.modalClose} onPress={() => setSelectedEvent(null)}>
-              <Text style={styles.modalCloseText}>✕</Text>
+              <AppIcon name="close" size={15} color={COLORS.textMuted} />
             </TouchableOpacity>
 
             {selectedEvent && (
@@ -267,11 +268,11 @@ export default function EventsScreen() {
                 <Text style={styles.modalTitle}>{selectedEvent.title}</Text>
 
                 <View style={styles.modalMetaGrid}>
-                  <ModalMeta icon="📅" label="Date" value={formatDate(selectedEvent.date)} half />
-                  {selectedEvent.time && <ModalMeta icon="⏰" label="Time" value={selectedEvent.time} half />}
-                  {selectedEvent.location && <ModalMeta icon="📍" label="Location" value={selectedEvent.location} />}
-                  {selectedEvent.creatorName && <ModalMeta icon="👤" label="Organised by" value={selectedEvent.creatorName} />}
-                  {selectedEvent.parish && <ModalMeta icon="⛪" label="Parish" value={selectedEvent.parish} />}
+                  <ModalMeta icon="calendar" label="Date" value={formatDate(selectedEvent.date)} half />
+                  {selectedEvent.time && <ModalMeta icon="time" label="Time" value={selectedEvent.time} half />}
+                  {selectedEvent.location && <ModalMeta icon="location-outline" label="Location" value={selectedEvent.location} />}
+                  {selectedEvent.creatorName && <ModalMeta icon="person" label="Organised by" value={selectedEvent.creatorName} />}
+                  {selectedEvent.parish && <ModalMeta icon="church" label="Parish" value={selectedEvent.parish} />}
                 </View>
 
                 <View style={styles.modalDivider} />
@@ -285,11 +286,11 @@ export default function EventsScreen() {
 
                 <View style={styles.postedRow}>
                   <Text style={styles.postedText}>
-                    📌 Posted {selectedEvent.createdAt ? formatDate(selectedEvent.createdAt) : '—'}
+                    Posted {selectedEvent.createdAt ? formatDate(selectedEvent.createdAt) : '-'}
                   </Text>
                   {selectedEvent.isAllParishes && (
                     <View style={styles.allParishesTag}>
-                      <Text style={styles.allParishesTagText}>🌐 Diocese-wide Event</Text>
+                      <Text style={styles.allParishesTagText}>Diocese-wide Event</Text>
                     </View>
                   )}
                 </View>
@@ -310,14 +311,14 @@ export default function EventsScreen() {
 
 const EventMeta = ({ icon, text, lines = 2 }) => (
   <View style={styles.metaRow}>
-    <Text style={styles.metaIcon}>{icon}</Text>
+    <AppIcon name={icon} size={13} color={COLORS.gold} style={styles.metaIcon} />
     <Text style={styles.metaText} numberOfLines={lines}>{text}</Text>
   </View>
 );
 
 const ModalMeta = ({ icon, label, value, half }) => (
   <View style={[styles.modalMetaItem, half && { width: (width - SPACING.lg * 2 - SPACING.sm) / 2 - SPACING.lg }]}>
-    <Text style={styles.modalMetaIcon}>{icon}</Text>
+    <AppIcon name={icon} size={18} color={COLORS.gold} style={styles.modalMetaIcon} />
     <View style={{ flex: 1 }}>
       <Text style={styles.modalMetaLabel}>{label}</Text>
       <Text style={styles.modalMetaValue} numberOfLines={2}>{value}</Text>
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
   metaText: { fontSize: FONTS.sizes.sm, color: COLORS.textMuted, flex: 1, lineHeight: 18 },
   eventFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: SPACING.sm, marginTop: SPACING.xs },
   attendingRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  attendingDot: { fontSize: 8, color: COLORS.teal },
+  attendingDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.teal },
   attendingText: { fontSize: FONTS.sizes.xs, color: COLORS.textMuted },
   categoryPill: { borderRadius: RADIUS.full, paddingHorizontal: SPACING.md, paddingVertical: 6, borderWidth: 1 },
   categoryPillText: { fontSize: FONTS.sizes.xs, fontWeight: FONTS.weights.bold },

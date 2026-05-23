@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { COLORS, SPACING, RADIUS } from '../constants/theme';
+import AppIcon from '../components/ui/AppIcon';
 
 import AdminHomeScreen from '../screens/admin/AdminHomeScreen';
 import EventsScreen from '../screens/main/EventsScreen';
@@ -32,26 +33,27 @@ const TabBarButton = ({ children, onPress, accessibilityState }) => {
   );
 };
 
-const TabIcon = ({ emoji, label, focused, color }) => (
+const TabIcon = ({ icon, label, focused, color }) => (
   <View style={styles.tabIconContainer}>
+    {focused ? <View style={[styles.activeDot, { backgroundColor: color }]} /> : null}
     <View style={[
       styles.tabIconWrapper,
       focused && { backgroundColor: `${color}18` },
     ]}>
-      <Text style={[styles.tabEmoji, { opacity: focused ? 1 : 0.5 }]}>{emoji}</Text>
+      <AppIcon name={icon} size={20} color={focused ? color : COLORS.textMuted} />
     </View>
     <Text style={[styles.tabLabel, focused && { color }]}>{label}</Text>
   </View>
 );
 
 const TABS = [
-  { name: 'Home', emoji: '✝', label: 'Home', component: AdminHomeScreen, color: COLORS.gold },
-  { name: 'Events', emoji: '📅', label: 'Events', component: EventsScreen, color: COLORS.gold },
-  { name: 'Live', emoji: '📺', label: 'Live', component: LiveScreen, color: COLORS.red },
-  { name: 'Resources', emoji: '📖', label: 'Sermons', component: ResourcesScreen, color: COLORS.gold },
-  { name: 'Manage', emoji: '🛡', label: 'Manage', component: ManageScreen, color: COLORS.red },
-  { name: 'UserManagement', emoji: '👥', label: 'Users', component: UserManagementScreen, color: COLORS.red },
-  { name: 'Profile', emoji: '👤', label: 'Profile', component: ProfileScreen, color: COLORS.gold },
+  { name: 'Home', icon: 'home', label: 'Home', component: AdminHomeScreen, color: COLORS.gold },
+  { name: 'Events', icon: 'calendar', label: 'Events', component: EventsScreen, color: COLORS.gold },
+  { name: 'Live', icon: 'live', label: 'Live', component: LiveScreen, color: COLORS.red },
+  { name: 'Resources', icon: 'resources', label: 'Sermons', component: ResourcesScreen, color: COLORS.gold },
+  { name: 'Manage', icon: 'privacy', label: 'Manage', component: ManageScreen, color: COLORS.red },
+  { name: 'UserManagement', icon: 'people-outline', label: 'Users', component: UserManagementScreen, color: COLORS.red },
+  { name: 'Profile', icon: 'person', label: 'Profile', component: ProfileScreen, color: COLORS.gold },
 ];
 
 export default function AdminTabs() {
@@ -72,7 +74,7 @@ export default function AdminTabs() {
             tabBarButton: (props) => <TabBarButton {...props} />,
             tabBarIcon: ({ focused }) => (
               <TabIcon
-                emoji={tab.emoji}
+                icon={tab.icon}
                 label={tab.label}
                 focused={focused}
                 color={tab.color}
@@ -118,6 +120,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    minWidth: 44,
+  },
+  activeDot: {
+    position: 'absolute',
+    top: -4,
+    width: 18,
+    height: 3,
+    borderRadius: 2,
   },
   tabIconWrapper: {
     width: 44,
@@ -126,7 +136,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  tabEmoji: { fontSize: 20 },
   tabLabel: {
     fontSize: 9,
     fontWeight: '600',

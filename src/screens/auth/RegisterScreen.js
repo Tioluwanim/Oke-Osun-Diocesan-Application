@@ -14,6 +14,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { ROLES } from '../../constants/config';
 import { useAuth } from '../../context/AuthContext';
 import LoadingButton from '../../components/ui/LoadingButton';
+import AppIcon from '../../components/ui/AppIcon';
 
 export default function RegisterScreen({ navigation }) {
   const [mode, setMode] = useState('register');
@@ -33,8 +34,8 @@ export default function RegisterScreen({ navigation }) {
   const { registerUser, completeInvite, login } = useAuth();
 
   const roles = [
-    { key: ROLES.MEMBER, label: 'Member', icon: '🙏', desc: 'Congregation' },
-    { key: ROLES.CLERGY, label: 'Clergy', icon: '✝', desc: 'Pastor / Minister' },
+    { key: ROLES.MEMBER, label: 'Member', icon: 'person', desc: 'Congregation' },
+    { key: ROLES.CLERGY, label: 'Clergy', icon: 'church', desc: 'Pastor / Minister' },
   ];
 
   const handleRegister = async () => {
@@ -62,7 +63,11 @@ export default function RegisterScreen({ navigation }) {
 
         const inviteResult = await completeInvite(inviteToken.trim(), password);
         if (inviteResult.success) {
-          await login(inviteResult.user, inviteResult.token || '');
+          if (inviteResult.user?.status === 'pending') {
+            navigation.replace('PendingApproval', { user: inviteResult.user });
+            return;
+          }
+          await login(inviteResult.user, inviteResult.accessToken, inviteResult.refreshToken);
           return;
         }
 
@@ -100,7 +105,7 @@ export default function RegisterScreen({ navigation }) {
           return;
         }
 
-        await login(user, result.token || '');
+        await login(user, result.accessToken, result.refreshToken);
         return;
       }
 
@@ -121,6 +126,7 @@ export default function RegisterScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.circle1} />
@@ -163,7 +169,7 @@ export default function RegisterScreen({ navigation }) {
 
           {error ? (
             <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠ {error}</Text>
+              <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
 
@@ -181,7 +187,7 @@ export default function RegisterScreen({ navigation }) {
                       ]}
                       onPress={() => setSelectedRole(role.key)}
                     >
-                      <Text style={styles.roleIcon}>{role.icon}</Text>
+                      <AppIcon name={role.icon} size={24} color={selectedRole === role.key ? COLORS.background : COLORS.gold} style={styles.roleIcon} />
                       <Text style={[
                         styles.roleLabel,
                         selectedRole === role.key && styles.roleLabelActive,
@@ -197,7 +203,7 @@ export default function RegisterScreen({ navigation }) {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Full Name *</Text>
                 <View style={[styles.inputWrapper, focusedInput === 'fullName' && styles.inputWrapperFocused]}>
-                  <Text style={styles.inputIcon}>👤</Text>
+                  <AppIcon name="person" size={18} color={COLORS.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your full name"
@@ -214,7 +220,7 @@ export default function RegisterScreen({ navigation }) {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Email Address *</Text>
                 <View style={[styles.inputWrapper, focusedInput === 'email' && styles.inputWrapperFocused]}>
-                  <Text style={styles.inputIcon}>✉</Text>
+                  <AppIcon name="email" size={18} color={COLORS.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="your@email.com"
@@ -233,7 +239,7 @@ export default function RegisterScreen({ navigation }) {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Phone Number</Text>
                 <View style={[styles.inputWrapper, focusedInput === 'phone' && styles.inputWrapperFocused]}>
-                  <Text style={styles.inputIcon}>📱</Text>
+                  <AppIcon name="phone" size={18} color={COLORS.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="+234 000 000 0000"
@@ -253,7 +259,7 @@ export default function RegisterScreen({ navigation }) {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Invite Code *</Text>
               <View style={[styles.inputWrapper, focusedInput === 'inviteToken' && styles.inputWrapperFocused]}>
-                <Text style={styles.inputIcon}>🔗</Text>
+                <AppIcon name="link-outline" size={18} color={COLORS.textMuted} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Paste the invite code from your admin"
@@ -272,7 +278,7 @@ export default function RegisterScreen({ navigation }) {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password *</Text>
             <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
-              <Text style={styles.inputIcon}>🔒</Text>
+              <AppIcon name="lock" size={18} color={COLORS.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Min. 8 characters"
@@ -285,7 +291,7 @@ export default function RegisterScreen({ navigation }) {
                 onBlur={() => setFocusedInput(null)}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Text style={styles.inputIcon}>{showPassword ? '🙈' : '👁'}</Text>
+                <AppIcon name={showPassword ? 'eyeOff' : 'eye'} size={18} color={COLORS.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -293,7 +299,7 @@ export default function RegisterScreen({ navigation }) {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Confirm Password *</Text>
             <View style={[styles.inputWrapper, focusedInput === 'confirmPassword' && styles.inputWrapperFocused]}>
-              <Text style={styles.inputIcon}>🔒</Text>
+              <AppIcon name="lock" size={18} color={COLORS.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Repeat your password"
@@ -306,7 +312,7 @@ export default function RegisterScreen({ navigation }) {
                 onBlur={() => setFocusedInput(null)}
               />
               <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                <Text style={styles.inputIcon}>{showConfirmPassword ? '🙈' : '👁'}</Text>
+                <AppIcon name={showConfirmPassword ? 'eyeOff' : 'eye'} size={18} color={COLORS.textMuted} />
               </TouchableOpacity>
             </View>
           </View>

@@ -16,9 +16,13 @@ import {
   Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { API_ROUTES } from '../../constants/config';
+import { uploadFileToGCS } from '../../lib/fileUpload';
+import AppIcon from '../../components/ui/AppIcon';
 
 const ROLE_CONFIG = {
   admin: { label: 'Admin', icon: '🛡️', color: COLORS.red, bg: 'rgba(201,76,76,0.1)' },
@@ -57,7 +61,8 @@ const FAQ_ITEMS = [
 ];
 
 export default function ProfileScreen() {
-  const { user, logout, updateUser, changePassword } = useAuth();
+  const { user, token, logout, updateUser, changePassword } = useAuth();
+  const [profilePhoto, setProfilePhoto] = useState(user?.photoUrl || null);
 
   // ── Edit Profile State ──
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -99,6 +104,9 @@ export default function ProfileScreen() {
   const roleConfig = ROLE_CONFIG[user?.role] || ROLE_CONFIG.member;
 
   useEffect(() => { loadNotifPrefs(); }, []);
+  useEffect(() => {
+    if (user?.photoUrl) setProfilePhoto(user.photoUrl);
+  }, [user?.photoUrl]);
 
   const loadNotifPrefs = async () => {
     try {
@@ -186,6 +194,40 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const handlePickPhoto = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Allow photo access to update your profile photo.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      Haptics.selectionAsync().catch(() => {});
+      const asset = result.assets[0];
+      setSaving(true);
+      try {
+        const photoUrl = await uploadFileToGCS({
+          uri: asset.uri,
+          name: asset.fileName || `profile-${user?.id || Date.now()}.jpg`,
+          mimeType: asset.mimeType || 'image/jpeg',
+        }, token, 'profiles');
+        const update = await updateUser({ photoUrl });
+        if (!update.success) throw new Error(update.message);
+        setProfilePhoto(photoUrl);
+        Alert.alert('Photo updated', 'Your profile photo has been saved.');
+      } catch (error) {
+        Alert.alert('Upload failed', error.message || 'Unable to update your photo right now.');
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
   const filteredParishes = parishes.filter((p) =>
     p.name.toLowerCase().includes(parishSearch.toLowerCase()) ||
     p.archdeaconry?.toLowerCase().includes(parishSearch.toLowerCase()) ||
@@ -239,7 +281,8 @@ export default function ProfileScreen() {
           </View>
         </View>
         <TouchableOpacity style={styles.editHeaderBtn} onPress={() => setEditModalVisible(true)}>
-          <Text style={styles.editHeaderText}>✏️ Edit</Text>
+          <AppIcon name="edit" size={16} color={COLORS.gold} />
+          <Text style={styles.editHeaderText}>Edit</Text>
         </TouchableOpacity>
       </View>
 
@@ -247,21 +290,25 @@ export default function ProfileScreen() {
         {/* ── Profile Card ── */}
         <View style={styles.profileCard}>
           <View style={styles.avatarWrapper}>
-            <View style={styles.avatar}>
-              <Image source={require('../../../assets/logo.png')} style={styles.avatarLogo} resizeMode="contain" />
-            </View>
+            <TouchableOpacity style={styles.avatar} onPress={handlePickPhoto} accessibilityRole="button" accessibilityLabel="Upload profile photo">
+              <Image source={profilePhoto ? { uri: profilePhoto } : require('../../../assets/logo.png')} style={styles.avatarLogo} resizeMode="cover" />
+              <View style={styles.avatarUpload}>
+                <AppIcon name="upload" size={14} color={COLORS.background} />
+              </View>
+            </TouchableOpacity>
             <View style={[styles.avatarRoleBadge, { backgroundColor: roleConfig.color }]}>
-              <Text style={styles.avatarRoleIcon}>{roleConfig.icon}</Text>
+              <AppIcon name={user?.role === 'admin' ? 'privacy' : user?.role === 'clergy' ? 'church' : 'person'} size={14} color="#fff" />
             </View>
           </View>
           <Text style={styles.profileName}>{user?.fullName || 'Church Member'}</Text>
           <View style={[styles.roleBadge, { backgroundColor: roleConfig.bg, borderColor: roleConfig.color }]}>
-            <Text style={styles.roleIcon}>{roleConfig.icon}</Text>
+            <AppIcon name={user?.role === 'admin' ? 'privacy' : user?.role === 'clergy' ? 'church' : 'person'} size={13} color={roleConfig.color} />
             <Text style={[styles.roleLabel, { color: roleConfig.color }]}>{roleConfig.label}</Text>
           </View>
           <Text style={styles.profileEmail}>{user?.email || ''}</Text>
-          {user?.phone && <Text style={styles.profilePhone}>📞 {user.phone}</Text>}
-          {user?.parish && <Text style={styles.profileParish}>⛪ {user.parish}</Text>}
+          {user?.phone && <Text style={styles.profilePhone}>{user.phone}</Text>}
+          {user?.parish && <Text style={styles.profileParish}>{user.parish}</Text>}
+          <Text style={styles.profilePhone}>Member since {user?.createdAt ? user.createdAt.slice(0, 10) : 'recently'}</Text>
           <View style={styles.dioceseTag}>
             <Text style={styles.dioceseTagText}>✝ Diocese of Oke-Osun, Church of Nigeria</Text>
           </View>
@@ -309,7 +356,7 @@ export default function ProfileScreen() {
 
         {/* ── Sign Out ── */}
         <TouchableOpacity style={styles.signOutBtn} onPress={handleLogout} activeOpacity={0.85}>
-          <Text style={styles.signOutIcon}>⎋</Text>
+          <AppIcon name="logout" size={18} color={COLORS.red} />
           <Text style={styles.signOutText}>Sign Out</Text>
         </TouchableOpacity>
 
@@ -768,6 +815,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: FONTS.sizes.xxl, fontWeight: FONTS.weights.black, color: COLORS.goldLight, letterSpacing: 0.5 },
   headerSubtitle: { fontSize: FONTS.sizes.xs, color: COLORS.gold, letterSpacing: 0.5, marginTop: 2 },
   editHeaderBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: 'rgba(201,168,76,0.1)', borderWidth: 1, borderColor: COLORS.border,
     borderRadius: RADIUS.full, paddingHorizontal: SPACING.md, paddingVertical: 8,
   },
@@ -784,6 +832,7 @@ const styles = StyleSheet.create({
     borderWidth: 3, borderColor: COLORS.gold, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', padding: 8,
   },
   avatarLogo: { width: '100%', height: '100%' },
+  avatarUpload: { position: 'absolute', right: 6, bottom: 6, width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.gold, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: COLORS.surface },
   avatarRoleBadge: { position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: COLORS.surface },
   avatarRoleIcon: { fontSize: 14 },
   profileName: { fontSize: FONTS.sizes.xl, fontWeight: FONTS.weights.black, color: COLORS.text, marginBottom: SPACING.sm, textAlign: 'center' },

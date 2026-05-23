@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,21 +9,25 @@ import {
   RefreshControl,
   StatusBar,
   Platform,
+  Animated,
+  useWindowDimensions,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import SkeletonCard from '../../components/ui/SkeletonCard';
 import EmptyState from '../../components/ui/EmptyState';
+import AppIcon from '../../components/ui/AppIcon';
 import usePrefetch from '../../hooks/usePrefetch';
 import { prefetchHomeFeeds } from '../../lib/prefetch';
 import { queryFns, queryKeys } from '../../lib/api';
 
 const QUICK_ACTIONS = [
-  { icon: '📺', label: 'Watch Live', screen: 'Live', color: 'rgba(201,76,76,0.12)' },
-  { icon: '🎙', label: 'Sermons', screen: 'Resources', color: 'rgba(201,168,76,0.12)' },
-  { icon: '📅', label: 'Events', screen: 'Events', color: 'rgba(76,138,201,0.12)' },
-  { icon: '👤', label: 'Profile', screen: 'Profile', color: 'rgba(76,201,168,0.12)' },
+  { icon: 'live', label: 'Watch Live', screen: 'Live', color: 'rgba(201,76,76,0.12)' },
+  { icon: 'audio', label: 'Sermons', screen: 'Resources', color: 'rgba(201,168,76,0.12)' },
+  { icon: 'calendar', label: 'Events', screen: 'Events', color: 'rgba(76,138,201,0.12)' },
+  { icon: 'person', label: 'Profile', screen: 'Profile', color: 'rgba(76,201,168,0.12)' },
 ];
 
 const formatDate = (value) => {
@@ -43,9 +47,12 @@ const isFutureEvent = (event) => {
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
+  const { width } = useWindowDimensions();
   const { prefetch } = usePrefetch();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const pulse = useRef(new Animated.Value(0)).current;
+  const cardBasis = width >= 900 ? '24%' : '48%';
 
   const { data: liveStream, isLoading: isLiveLoading } = useQuery({
     queryKey: queryKeys.live,
@@ -113,10 +120,10 @@ export default function HomeScreen({ navigation }) {
   }, [events, sermons]);
 
   const stats = useMemo(() => ([
-    { label: 'Events', value: String(events.length), icon: '📅' },
-    { label: 'Sermons', value: String(sermons.length), icon: '🎙' },
-    { label: 'Parishes', value: String(parishes.length), icon: '⛪' },
-    { label: 'Live', value: liveStream?.isLive ? 'On' : 'Off', icon: '📺' },
+    { label: 'Events', value: String(events.length), icon: 'calendar' },
+    { label: 'Sermons', value: String(sermons.length), icon: 'audio' },
+    { label: 'Parishes', value: String(parishes.length), icon: 'church' },
+    { label: 'Live', value: liveStream?.isLive ? 'On' : 'Off', icon: 'live' },
   ]), [events.length, sermons.length, parishes.length, liveStream?.isLive]);
 
   const isLoading = isLiveLoading || isEventsLoading || isSermonsLoading || isParishesLoading;
@@ -134,8 +141,26 @@ export default function HomeScreen({ navigation }) {
   };
 
   const navigateWithPrefetch = (screen) => {
+    Haptics.selectionAsync().catch(() => {});
     prefetchHomeFeeds(prefetch);
     if (screen) navigation.navigate(screen);
+  };
+
+  useEffect(() => {
+    if (!liveStream?.isLive) return undefined;
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 1200, useNativeDriver: true }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [liveStream?.isLive, pulse]);
+
+  const pulseStyle = {
+    opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] }),
+    transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.18] }) }],
   };
 
   return (
@@ -150,7 +175,7 @@ export default function HomeScreen({ navigation }) {
             resizeMode="contain"
           />
           <View>
-            <Text style={styles.headerGreeting}>{getGreeting()}, {getFirstName()} 👋</Text>
+            <Text style={styles.headerGreeting}>{getGreeting()}, {getFirstName()}</Text>
             <Text style={styles.headerSubtitle}>Diocese of Oke-Osun</Text>
           </View>
         </View>
@@ -174,22 +199,22 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigateWithPrefetch('Live')}
             activeOpacity={0.85}
           >
-            <View style={styles.livePulse}>
+            <Animated.View style={[styles.livePulse, pulseStyle]}>
               <View style={styles.liveDot} />
-            </View>
+            </Animated.View>
             <Text style={styles.liveBannerText}>
-              LIVE NOW • {liveStream.title || 'Sunday Service'}
+              LIVE NOW - {liveStream.title || 'Sunday Service'}
             </Text>
             <View style={styles.liveJoinBtn}>
-              <Text style={styles.liveJoinText}>Join ›</Text>
+              <Text style={styles.liveJoinText}>Join</Text>
             </View>
           </TouchableOpacity>
         )}
 
         <View style={styles.statsRow}>
           {stats.map((stat) => (
-            <View key={stat.label} style={styles.statCard}>
-              <Text style={styles.statIcon}>{stat.icon}</Text>
+            <View key={stat.label} style={[styles.statCard, { flexBasis: cardBasis, maxWidth: cardBasis }]}>
+              <AppIcon name={stat.icon} size={20} color={COLORS.gold} style={styles.statIcon} />
               <Text style={styles.statValue}>{stat.value}</Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
             </View>
@@ -205,13 +230,13 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.featureBody}>
               <Text style={styles.featureTag}>{nextEvent.category || 'Event'}</Text>
               <Text style={styles.featureTitle}>{nextEvent.title}</Text>
-              <Text style={styles.featureMeta}>{formatDate(nextEvent.date)} {nextEvent.time ? `• ${nextEvent.time}` : ''}</Text>
+              <Text style={styles.featureMeta}>{formatDate(nextEvent.date)} {nextEvent.time ? `- ${nextEvent.time}` : ''}</Text>
               <Text style={styles.featureDescription}>{nextEvent.location || nextEvent.parish || 'Diocesan calendar'}</Text>
             </View>
           </TouchableOpacity>
         ) : (
           <EmptyState
-            icon="📅"
+            icon="calendar"
             title="No upcoming events"
             description="New diocesan events will appear here."
           />
@@ -230,13 +255,13 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.featureTitle}>{latestSermon.title}</Text>
               <Text style={styles.featureMeta}>{latestSermon.preacher || 'Diocese clergy'}</Text>
               <Text style={styles.featureDescription}>
-                {latestSermon.duration || 'Freshly uploaded'} {latestSermon.series ? `• ${latestSermon.series}` : ''}
+                {latestSermon.duration || 'Freshly uploaded'} {latestSermon.series ? `- ${latestSermon.series}` : ''}
               </Text>
             </View>
           </TouchableOpacity>
         ) : (
           <EmptyState
-            icon="🎙"
+            icon="audio"
             title="No sermons yet"
             description="Uploaded sermons will appear here."
           />
@@ -251,7 +276,7 @@ export default function HomeScreen({ navigation }) {
               onPress={() => navigateWithPrefetch(action.screen)}
               activeOpacity={0.8}
             >
-              <Text style={styles.quickActionIcon}>{action.icon}</Text>
+              <AppIcon name={action.icon} size={26} color={COLORS.gold} style={styles.quickActionIcon} />
               <Text style={styles.quickActionLabel}>{action.label}</Text>
             </TouchableOpacity>
           ))}
@@ -276,7 +301,7 @@ export default function HomeScreen({ navigation }) {
           ))
         ) : (
           <EmptyState
-            icon="📰"
+            icon="notification"
             title="No updates yet"
             description="Events and sermons will show up here as they are published."
           />
@@ -387,17 +412,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
   },
   statCard: {
-    width: '48%',
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: RADIUS.xl,
     paddingVertical: SPACING.md,
     alignItems: 'center',
+    minWidth: 150,
     marginBottom: SPACING.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -406,11 +432,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   statIcon: {
-    fontSize: 18,
     marginBottom: SPACING.xs,
-  },
-  statIcon: {
-    fontSize: 18,
   },
   statValue: {
     fontSize: FONTS.sizes.lg,
@@ -485,10 +507,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: SPACING.sm,
     paddingHorizontal: SPACING.lg,
   },
   quickAction: {
-    width: '48%',
+    flexBasis: '48%',
+    maxWidth: '48%',
+    minWidth: 150,
     borderRadius: RADIUS.xl,
     paddingVertical: SPACING.lg,
     alignItems: 'center',
@@ -503,11 +528,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   quickActionIcon: {
-    fontSize: 24,
     marginBottom: SPACING.xs,
-  },
-  quickActionIcon: {
-    fontSize: 24,
   },
   quickActionLabel: {
     color: COLORS.text,

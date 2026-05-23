@@ -5,12 +5,16 @@ const LOCAL_API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 
 const ENV_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
 
 export const APP_ENV = process.env.EXPO_PUBLIC_APP_ENV?.trim() || (__DEV__ ? 'development' : 'production');
-export const API_BASE_URL = PROD_API_BASE_URL;
+export const API_BASE_URL = ENV_API_BASE_URL || (__DEV__ ? LOCAL_API_BASE_URL : PROD_API_BASE_URL);
 
 export const API_ROUTES = {
   register:      `${API_BASE_URL}/auth/register`,
   login:         `${API_BASE_URL}/auth/login`,
+  refresh:       `${API_BASE_URL}/auth/refresh`,
+  logout:        `${API_BASE_URL}/auth/logout`,
+  approvalStatus:`${API_BASE_URL}/auth/approval-status`,
   completeInvite:`${API_BASE_URL}/auth/complete-invite`,
+  currentUser:   `${API_BASE_URL}/users/me`,
   updateProfile: `${API_BASE_URL}/users/me`,
   changePassword:`${API_BASE_URL}/users/me/password`,
   parishes:      `${API_BASE_URL}/parishes`,
@@ -54,6 +58,7 @@ export const ROLES = {
 
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'radet_auth_token',
+  REFRESH_TOKEN: 'radet_refresh_token',
   USER_DATA:  'radet_user_data',
   ROLE:       'radet_user_role',
 };

@@ -6,7 +6,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Authorization header missing or invalid")
     token = authorization.split(" ")[1]
-    payload = decode_token(token)
+    payload = decode_token(token, expected_type="access")
     email = payload["email"]
     if email is None:
         raise HTTPException(status_code=401, detail="Invalid token payload")

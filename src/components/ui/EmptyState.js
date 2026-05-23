@@ -1,16 +1,30 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
+import AppIcon from './AppIcon';
 
-export default function EmptyState({ icon, title, description, actionLabel, onAction }) {
+export default function EmptyState({ icon = 'resources', title, description, text, subText, actionLabel, onAction, onReset }) {
+  const resolvedTitle = title || text;
+  const resolvedDescription = description || subText;
+  const resolvedAction = actionLabel || (onReset ? 'Reset Filters' : null);
+  const resolvedHandler = onAction || onReset;
+
   return (
     <View style={styles.container}>
-      <Text style={styles.icon}>{icon || ''}</Text>
-      <Text style={styles.title}>{title}</Text>
-      {description ? <Text style={styles.desc}>{description}</Text> : null}
-      {actionLabel && onAction ? (
-        <TouchableOpacity style={styles.button} onPress={onAction}>
-          <Text style={styles.buttonText}>{actionLabel}</Text>
+      <View style={styles.illustration} accessible accessibilityLabel="Empty state illustration">
+        <View style={styles.illustrationRing} />
+        <AppIcon name={icon} size={34} color={COLORS.gold} />
+      </View>
+      <Text style={styles.title}>{resolvedTitle}</Text>
+      {resolvedDescription ? <Text style={styles.desc}>{resolvedDescription}</Text> : null}
+      {resolvedAction && resolvedHandler ? (
+        <TouchableOpacity
+          style={styles.button}
+          onPress={resolvedHandler}
+          accessibilityRole="button"
+          accessibilityLabel={resolvedAction}
+        >
+          <Text style={styles.buttonText}>{resolvedAction}</Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -35,7 +49,27 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 7,
   },
-  icon: { fontSize: 52 },
+  illustration: {
+    width: 78,
+    height: 58,
+    borderRadius: RADIUS.xl,
+    backgroundColor: 'rgba(201,168,76,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(201,168,76,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  illustrationRing: {
+    position: 'absolute',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 1,
+    borderColor: 'rgba(76,201,168,0.16)',
+    top: 18,
+    right: -34,
+  },
   title: { fontSize: FONTS.sizes.xl, fontWeight: FONTS.weights.bold, color: COLORS.text, textAlign: 'center' },
   desc: { fontSize: FONTS.sizes.sm, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20 },
   button: { marginTop: SPACING.sm, backgroundColor: COLORS.gold, borderRadius: RADIUS.full, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm },

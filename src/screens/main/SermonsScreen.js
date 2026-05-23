@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,40 +13,48 @@ import {
   TextInput,
   Image,
   Linking,
+  Share,
+  ActivityIndicator,
 } from 'react-native';
+import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { API_ROUTES } from '../../constants/config';
 import SkeletonList from '../../components/ui/SkeletonList';
+import AppIcon from '../../components/ui/AppIcon';
+import BrandedEmptyState from '../../components/ui/EmptyState';
+import { queryFns, queryKeys } from '../../lib/api';
 
 const { width } = Dimensions.get('window');
 
 const INNER_TABS = [
-  { key: 'sermons',   label: 'Sermons',     icon: '🎙️' },
-  { key: 'magazines', label: 'Magazines',   icon: '📖' },
-  { key: 'bible',     label: 'Bible Study', icon: '📝' },
-  { key: 'documents', label: 'Documents',   icon: '📄' },
+  { key: 'sermons',   label: 'Sermons',     icon: 'audio' },
+  { key: 'magazines', label: 'Magazines',   icon: 'magazine' },
+  { key: 'bible',     label: 'Bible Study', icon: 'bible' },
+  { key: 'documents', label: 'Documents',   icon: 'document' },
 ];
 
 const SERMON_FILTERS = [
-  { label: 'All',    icon: '✦'  },
-  { label: 'Audio',  icon: '🎙️' },
-  { label: 'Video',  icon: '📹' },
-  { label: 'Series', icon: '📚' },
-  { label: 'Bishop', icon: '⛪' },
-  { label: 'Guest',  icon: '🌟' },
+  { label: 'All',    icon: 'all'  },
+  { label: 'Audio',  icon: 'audio' },
+  { label: 'Video',  icon: 'video' },
+  { label: 'Series', icon: 'resources' },
+  { label: 'Bishop', icon: 'church' },
+  { label: 'Guest',  icon: 'star' },
 ];
 
 const SERMON_TYPE_CONFIG = {
-  Audio: { color: COLORS.gold, bg: 'rgba(201,168,76,0.1)', icon: '🎙️' },
-  Video: { color: COLORS.teal, bg: 'rgba(76,201,168,0.1)', icon: '📹' },
+  Audio: { color: COLORS.gold, bg: 'rgba(201,168,76,0.1)', icon: 'audio' },
+  Video: { color: COLORS.teal, bg: 'rgba(76,201,168,0.1)', icon: 'video' },
 };
 
 const MAG_CATEGORY_CONFIG = {
-  Devotional: { color: COLORS.gold, icon: '✝️' },
-  Newsletter: { color: COLORS.teal, icon: '📰' },
-  Ministry:   { color: COLORS.teal, icon: '🙏' },
-  Education:  { color: '#8a4cc9',   icon: '📚' },
-  Other:      { color: COLORS.gold, icon: '📖' },
+  Devotional: { color: COLORS.gold, icon: 'bible' },
+  Newsletter: { color: COLORS.teal, icon: 'magazine' },
+  Ministry:   { color: COLORS.teal, icon: 'church' },
+  Education:  { color: '#8a4cc9',   icon: 'resources' },
+  Other:      { color: COLORS.gold, icon: 'magazine' },
 };
 
 const LEVEL_CONFIG = {
@@ -56,11 +64,11 @@ const LEVEL_CONFIG = {
 };
 
 const DOC_CATEGORY_CONFIG = {
-  Governance:     { color: COLORS.gold, icon: '🏛️' },
-  Administration: { color: COLORS.teal, icon: '📋' },
-  Clergy:         { color: COLORS.teal, icon: '⛪' },
-  Education:      { color: '#8a4cc9',   icon: '📚' },
-  Other:          { color: COLORS.gold, icon: '📄' },
+  Governance:     { color: COLORS.gold, icon: 'church' },
+  Administration: { color: COLORS.teal, icon: 'document' },
+  Clergy:         { color: COLORS.teal, icon: 'church' },
+  Education:      { color: '#8a4cc9',   icon: 'resources' },
+  Other:          { color: COLORS.gold, icon: 'document' },
 };
 
 export default function ResourcesScreen() {
@@ -69,14 +77,15 @@ export default function ResourcesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSermon, setSelectedSermon] = useState(null);
   const [playingId, setPlayingId] = useState(null);
+  const [audioLoadingId, setAudioLoadingId] = useState(null);
+  const soundRef = useRef(null);
+  const queryClient = useQueryClient();
 
   // ── Per-tab data + loading ──
-  const [sermons,      setSermons]      = useState([]);
   const [magazines,    setMagazines]    = useState([]);
   const [bibleStudies, setBibleStudies] = useState([]);
   const [documents,    setDocuments]    = useState([]);
 
-  const [loadingSermons, setLoadingSermons] = useState(true);
   const [loadingMags,    setLoadingMags]    = useState(false);
   const [loadingBible,   setLoadingBible]   = useState(false);
   const [loadingDocs,    setLoadingDocs]    = useState(false);
@@ -89,17 +98,10 @@ export default function ResourcesScreen() {
   const [lessonModal,     setLessonModal]      = useState(false);
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
 
-  // ── Fetch sermons ──
-  const fetchSermons = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoadingSermons(true);
-    try {
-      const response = await fetch(`${API_ROUTES.sermons}?limit=100`);
-      const data = await response.json();
-      if (response.ok) setSermons(data.sermons || []);
-    } catch {}
-    finally { setLoadingSermons(false); setRefreshing(false); }
-  }, []);
+  const { data: sermons = [], isLoading: loadingSermons } = useQuery({
+    queryKey: queryKeys.sermons,
+    queryFn: queryFns.sermons,
+  });
 
   // ── Fetch magazines ──
   const fetchMagazines = useCallback(async () => {
@@ -134,8 +136,6 @@ export default function ResourcesScreen() {
     finally { setLoadingDocs(false); }
   }, []);
 
-  useEffect(() => { fetchSermons(); }, []);
-
   useEffect(() => {
     if (activeTab === 'magazines'  && magazines.length    === 0) fetchMagazines();
     if (activeTab === 'bible'      && bibleStudies.length === 0) fetchBibleStudies();
@@ -143,7 +143,10 @@ export default function ResourcesScreen() {
   }, [activeTab]);
 
   const onRefresh = () => {
-    if (activeTab === 'sermons')   fetchSermons(true);
+    if (activeTab === 'sermons') {
+      setRefreshing(true);
+      queryClient.invalidateQueries({ queryKey: queryKeys.sermons }).finally(() => setRefreshing(false));
+    }
     if (activeTab === 'magazines') { setRefreshing(true); fetchMagazines().finally(() => setRefreshing(false)); }
     if (activeTab === 'bible')     { setRefreshing(true); fetchBibleStudies().finally(() => setRefreshing(false)); }
     if (activeTab === 'documents') { setRefreshing(true); fetchDocuments().finally(() => setRefreshing(false)); }
@@ -172,12 +175,53 @@ export default function ResourcesScreen() {
   });
 
   const typeConfig = (type) => SERMON_TYPE_CONFIG[type] || SERMON_TYPE_CONFIG.Audio;
-  const handlePlay = (id) => setPlayingId(playingId === id ? null : id);
+  const stopAudio = async () => {
+    if (soundRef.current) {
+      await soundRef.current.unloadAsync().catch(() => {});
+      soundRef.current = null;
+    }
+    setPlayingId(null);
+  };
+  const handlePlay = async (sermon) => {
+    if (!sermon?.url) return;
+    Haptics.selectionAsync().catch(() => {});
+    if (playingId === sermon.id) {
+      await stopAudio();
+      return;
+    }
+    setAudioLoadingId(sermon.id);
+    await stopAudio();
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: sermon.url },
+        { shouldPlay: true, staysActiveInBackground: true }
+      );
+      soundRef.current = sound;
+      setPlayingId(sermon.id);
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status?.didJustFinish) stopAudio();
+      });
+    } catch {
+      handleOpenUrl(sermon.url);
+    } finally {
+      setAudioLoadingId(null);
+    }
+  };
+  const handleShareSermon = async (sermon) => {
+    if (!sermon) return;
+    await Share.share({
+      title: sermon.title,
+      message: `${sermon.title}${sermon.preacher ? ` by ${sermon.preacher}` : ''}${sermon.url ? `\n${sermon.url}` : ''}`,
+      url: sermon.url,
+    }).catch(() => {});
+  };
   const handleOpenUrl = (url) => { if (url) Linking.openURL(url).catch(() => {}); };
   const isNew = (createdAt) => {
     if (!createdAt) return false;
     return Date.now() - new Date(createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
   };
+
+  useEffect(() => () => { stopAudio(); }, []);
 
   // ── Open lesson ──
   const openLesson = (lesson, index) => {
@@ -210,7 +254,7 @@ export default function ResourcesScreen() {
           </View>
         </View>
         <View style={styles.headerIcon}>
-          <Text style={styles.headerIconText}>📚</Text>
+          <AppIcon name="resources" size={22} color={COLORS.gold} />
         </View>
       </View>
 
@@ -226,7 +270,7 @@ export default function ResourcesScreen() {
                 onPress={() => { setActiveTab(tab.key); setSearchQuery(''); }}
                 activeOpacity={0.75}
               >
-                <Text style={styles.innerTabIcon}>{tab.icon}</Text>
+                <AppIcon name={tab.icon} size={15} color={active ? COLORS.gold : COLORS.textMuted} />
                 <Text style={[styles.innerTabLabel, active && styles.innerTabLabelActive]}>{tab.label}</Text>
                 {active && <View style={styles.innerTabIndicator} />}
               </TouchableOpacity>
@@ -239,7 +283,7 @@ export default function ResourcesScreen() {
       {(activeTab === 'sermons' || activeTab === 'magazines' || activeTab === 'bible') && (
         <View style={styles.searchContainer}>
           <View style={styles.searchWrapper}>
-            <Text style={styles.searchIcon}>🔍</Text>
+            <AppIcon name="search" size={17} color={COLORS.textMuted} />
             <TextInput
               style={styles.searchInput}
               placeholder={
@@ -252,7 +296,7 @@ export default function ResourcesScreen() {
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.searchClearBtn}>
-                <Text style={styles.searchClear}>✕</Text>
+                <AppIcon name="close" size={14} color={COLORS.textMuted} />
               </TouchableOpacity>
             )}
           </View>
@@ -279,7 +323,7 @@ export default function ResourcesScreen() {
                     onPress={() => setSermonFilter(filter.label)}
                     activeOpacity={0.75}
                   >
-                    <Text style={styles.filterChipIcon}>{filter.icon}</Text>
+                <AppIcon name={filter.icon} size={13} color={active ? COLORS.background : COLORS.textMuted} />
                     <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{filter.label}</Text>
                   </TouchableOpacity>
                 );
@@ -297,7 +341,7 @@ export default function ResourcesScreen() {
                       activeOpacity={0.8}
                       onPress={() => { setSermonFilter('Series'); setSearchQuery(s.title); }}
                     >
-                      <Text style={styles.seriesIcon}>📚</Text>
+                      <AppIcon name="resources" size={24} color={COLORS.gold} style={styles.seriesIcon} />
                       <Text style={styles.seriesTitle} numberOfLines={2}>{s.title}</Text>
                       <Text style={styles.seriesCount}>{s.count} message{s.count !== 1 ? 's' : ''}</Text>
                     </TouchableOpacity>
@@ -311,7 +355,7 @@ export default function ResourcesScreen() {
               {loadingSermons ? (
                 <SkeletonList count={5} itemHeight={150} />
               ) : filteredSermons.length === 0 ? (
-                <EmptyState icon="📭" text="No sermons found" subText="Try a different filter or search term" onReset={() => { setSermonFilter('All'); setSearchQuery(''); }} />
+                <BrandedEmptyState icon="audio" text="No sermons found" subText="Try a different filter or search term" onReset={() => { setSermonFilter('All'); setSearchQuery(''); }} />
               ) : (
                 filteredSermons.map((sermon) => {
                   const config    = typeConfig(sermon.type);
@@ -327,29 +371,31 @@ export default function ResourcesScreen() {
                       <View style={styles.sermonCardInner}>
                         <View style={styles.badgeRow}>
                           <View style={[styles.typeBadge, { backgroundColor: config.bg, borderColor: config.color }]}>
-                            <Text style={styles.typeBadgeIcon}>{config.icon}</Text>
+                            <AppIcon name={config.icon} size={11} color={config.color} />
                             <Text style={[styles.typeBadgeText, { color: config.color }]}>{sermon.type}</Text>
                           </View>
                           {isNew(sermon.createdAt) && <View style={styles.newBadge}><Text style={styles.newBadgeText}>NEW</Text></View>}
-                          {sermon.series && <Text style={styles.seriesTagText} numberOfLines={1}>📚 {sermon.series}</Text>}
+                          {sermon.series && <Text style={styles.seriesTagText} numberOfLines={1}>{sermon.series}</Text>}
                         </View>
                         <View style={styles.sermonContentRow}>
                           <View style={styles.sermonInfo}>
                             <Text style={styles.sermonTitle} numberOfLines={2}>{sermon.title}</Text>
                             <Text style={styles.sermonPreacher} numberOfLines={1}>{sermon.preacher}</Text>
                             <View style={styles.sermonMetaRow}>
-                              <Text style={styles.metaSmall}>📅 {sermon.createdAt ? sermon.createdAt.slice(0, 10) : '—'}</Text>
-                              <Text style={styles.metaDot}>·</Text>
-                              <Text style={styles.metaSmall}>⏱ {sermon.duration || 'N/A'}</Text>
-                              {sermon.scripture && <><Text style={styles.metaDot}>·</Text><Text style={styles.metaSmall}>📖 {sermon.scripture}</Text></>}
+                              <Text style={styles.metaSmall}>{sermon.createdAt ? sermon.createdAt.slice(0, 10) : '-'}</Text>
+                              <Text style={styles.metaDot}>-</Text>
+                              <Text style={styles.metaSmall}>{sermon.duration || 'N/A'}</Text>
+                              {sermon.scripture && <><Text style={styles.metaDot}>-</Text><Text style={styles.metaSmall}>{sermon.scripture}</Text></>}
                             </View>
-                            <Text style={styles.metaSmall}>👁 {sermon.views || 0} views</Text>
+                            <Text style={styles.metaSmall}>{sermon.views || 0} views</Text>
                           </View>
                           <TouchableOpacity
                             style={[styles.playBtn, { backgroundColor: config.color }]}
-                            onPress={() => { handlePlay(sermon.id); if (sermon.url) handleOpenUrl(sermon.url); }}
+                            onPress={() => handlePlay(sermon)}
+                            accessibilityRole="button"
+                            accessibilityLabel={isPlaying ? 'Pause sermon audio' : 'Play sermon audio'}
                           >
-                            <Text style={styles.playBtnIcon}>{isPlaying ? '⏸' : '▶'}</Text>
+                            {audioLoadingId === sermon.id ? <ActivityIndicator color={COLORS.background} /> : <AppIcon name={isPlaying ? 'pause' : 'play'} size={18} color={COLORS.background} />}
                           </TouchableOpacity>
                         </View>
                         {isPlaying && (
@@ -376,20 +422,20 @@ export default function ResourcesScreen() {
             {loadingMags ? (
               <SkeletonList count={4} itemHeight={160} />
             ) : magazines.length === 0 ? (
-              <EmptyState icon="📖" text="No magazines yet" subText="Check back soon for publications" />
+                <BrandedEmptyState icon="magazine" text="No magazines yet" subText="Check back soon for publications" />
             ) : (
               magazines.filter(m =>
                 m.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 m.category?.toLowerCase().includes(searchQuery.toLowerCase())
               ).map((mag) => {
-                const config = MAG_CATEGORY_CONFIG[mag.category] || { color: COLORS.gold, icon: '📖' };
+                const config = MAG_CATEGORY_CONFIG[mag.category] || { color: COLORS.gold, icon: 'magazine' };
                 return (
                   <TouchableOpacity key={mag.id} style={styles.resourceCard} activeOpacity={0.85}>
                     <View style={[styles.cardTopBar, { backgroundColor: config.color }]} />
                     <View style={styles.resourceCardInner}>
                       <View style={styles.resourceCardRow}>
                         <View style={[styles.resourceIconWrapper, { backgroundColor: `${config.color}18` }]}>
-                          <Text style={styles.resourceIconEmoji}>{config.icon}</Text>
+                          <AppIcon name={config.icon} size={26} color={config.color} />
                         </View>
                         <View style={styles.resourceInfo}>
                           <View style={styles.badgeRow}>
@@ -400,18 +446,18 @@ export default function ResourcesScreen() {
                           </View>
                           <Text style={styles.resourceTitle} numberOfLines={2}>{mag.title}</Text>
                           <View style={styles.sermonMetaRow}>
-                            <Text style={styles.metaSmall}>📅 {mag.date || mag.createdAt?.slice(0, 10) || '—'}</Text>
-                            {mag.pages && <><Text style={styles.metaDot}>·</Text><Text style={styles.metaSmall}>📄 {mag.pages} pages</Text></>}
+                            <Text style={styles.metaSmall}>{mag.date || mag.createdAt?.slice(0, 10) || '-'}</Text>
+                            {mag.pages && <><Text style={styles.metaDot}>-</Text><Text style={styles.metaSmall}>{mag.pages} pages</Text></>}
                           </View>
                           {mag.description && <Text style={styles.resourceDesc} numberOfLines={2}>{mag.description}</Text>}
                         </View>
                       </View>
                       <View style={styles.resourceActions}>
                         <TouchableOpacity style={[styles.resourceBtn, { backgroundColor: config.color }]} onPress={() => mag.url && handleOpenUrl(mag.url)}>
-                          <Text style={styles.resourceBtnText}>👁  Read</Text>
+                          <Text style={styles.resourceBtnText}>Read</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.resourceBtnOutline} onPress={() => mag.url && handleOpenUrl(mag.url)}>
-                          <Text style={styles.resourceBtnOutlineText}>⬇  Download</Text>
+                          <Text style={styles.resourceBtnOutlineText}>Download</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -429,7 +475,7 @@ export default function ResourcesScreen() {
             {loadingBible ? (
               <SkeletonList count={4} itemHeight={160} />
             ) : bibleStudies.length === 0 ? (
-              <EmptyState icon="📝" text="No Bible studies yet" subText="Check back soon for study materials" />
+              <BrandedEmptyState icon="bible" text="No Bible studies yet" subText="Check back soon for study materials" />
             ) : (
               bibleStudies.filter(b =>
                 b.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -451,12 +497,12 @@ export default function ResourcesScreen() {
                           <Text style={[styles.typeBadgeText, { color: levelConfig.color }]}>{study.level}</Text>
                         </View>
                         {isNew(study.createdAt) && <View style={styles.newBadge}><Text style={styles.newBadgeText}>NEW</Text></View>}
-                        <Text style={styles.metaSmall}>📖 {study.book}</Text>
+                        <Text style={styles.metaSmall}>{study.book}</Text>
                       </View>
                       <Text style={styles.resourceTitle}>{study.title}</Text>
                       {study.description && <Text style={styles.resourceDesc} numberOfLines={2}>{study.description}</Text>}
                       <View style={styles.studyFooter}>
-                        <Text style={styles.metaSmall}>📚 {lessonCount} lesson{lessonCount !== 1 ? 's' : ''}</Text>
+                        <Text style={styles.metaSmall}>{lessonCount} lesson{lessonCount !== 1 ? 's' : ''}</Text>
                         <TouchableOpacity
                           style={[styles.resourceBtn, { backgroundColor: levelConfig.color }]}
                           onPress={() => { setSelectedStudy(study); setStudyModal(true); }}
@@ -479,14 +525,14 @@ export default function ResourcesScreen() {
             {loadingDocs ? (
               <SkeletonList count={4} itemHeight={90} />
             ) : documents.length === 0 ? (
-              <EmptyState icon="📄" text="No documents yet" subText="Church documents will appear here" />
+              <BrandedEmptyState icon="document" text="No documents yet" subText="Church documents will appear here" />
             ) : (
               documents.map((doc) => {
-                const config = DOC_CATEGORY_CONFIG[doc.category] || { color: COLORS.gold, icon: '📄' };
+                const config = DOC_CATEGORY_CONFIG[doc.category] || { color: COLORS.gold, icon: 'document' };
                 return (
                   <TouchableOpacity key={doc.id} style={styles.docCard} activeOpacity={0.85} onPress={() => doc.url && handleOpenUrl(doc.url)}>
                     <View style={[styles.docIconWrapper, { backgroundColor: `${config.color}18` }]}>
-                      <Text style={styles.docIcon}>{config.icon}</Text>
+                      <AppIcon name={config.icon} size={24} color={config.color} />
                     </View>
                     <View style={styles.docInfo}>
                       <Text style={styles.docTitle}>{doc.title}</Text>
@@ -499,7 +545,7 @@ export default function ResourcesScreen() {
                       </View>
                     </View>
                     <TouchableOpacity style={styles.docDownloadBtn} onPress={() => doc.url && handleOpenUrl(doc.url)}>
-                      <Text style={styles.docDownloadIcon}>⬇</Text>
+                      <AppIcon name="download" size={17} color={COLORS.gold} />
                     </TouchableOpacity>
                   </TouchableOpacity>
                 );
@@ -520,7 +566,7 @@ export default function ResourcesScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <TouchableOpacity style={styles.modalClose} onPress={() => setSelectedSermon(null)}>
-              <Text style={styles.modalCloseText}>✕</Text>
+              <AppIcon name="close" size={15} color={COLORS.textMuted} />
             </TouchableOpacity>
             {selectedSermon && (
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalContent}>
@@ -532,11 +578,11 @@ export default function ResourcesScreen() {
                 <Text style={styles.modalTitle}>{selectedSermon.title}</Text>
                 <Text style={styles.modalPreacher}>{selectedSermon.preacher}</Text>
                 <View style={styles.modalMetaGrid}>
-                  <ModalMeta icon="📅" label="Date"     value={selectedSermon.createdAt ? selectedSermon.createdAt.slice(0, 10) : '—'} />
-                  <ModalMeta icon="⏱" label="Duration" value={selectedSermon.duration || 'N/A'} />
-                  {selectedSermon.scripture && <ModalMeta icon="📖" label="Scripture" value={selectedSermon.scripture} />}
-                  <ModalMeta icon="👁" label="Views"    value={`${selectedSermon.views || 0} views`} />
-                  {selectedSermon.series && <ModalMeta icon="📚" label="Series" value={selectedSermon.series} full />}
+                  <ModalMeta icon="calendar" label="Date"     value={selectedSermon.createdAt ? selectedSermon.createdAt.slice(0, 10) : '-'} />
+                  <ModalMeta icon="time" label="Duration" value={selectedSermon.duration || 'N/A'} />
+                  {selectedSermon.scripture && <ModalMeta icon="bible" label="Scripture" value={selectedSermon.scripture} />}
+                  <ModalMeta icon="eye" label="Views"    value={`${selectedSermon.views || 0} views`} />
+                  {selectedSermon.series && <ModalMeta icon="resources" label="Series" value={selectedSermon.series} full />}
                 </View>
                 {selectedSermon.description && (
                   <>
@@ -548,16 +594,16 @@ export default function ResourcesScreen() {
                 <View style={styles.modalActions}>
                   <TouchableOpacity
                     style={[styles.modalActionBtn, { backgroundColor: typeConfig(selectedSermon.type).color }]}
-                    onPress={() => { handlePlay(selectedSermon.id); if (selectedSermon.url) handleOpenUrl(selectedSermon.url); setSelectedSermon(null); }}
+                    onPress={() => { handlePlay(selectedSermon); setSelectedSermon(null); }}
                   >
-                    <Text style={styles.modalActionBtnText}>{playingId === selectedSermon.id ? '⏸  Pause' : '▶  Play Now'}</Text>
+                    <Text style={styles.modalActionBtnText}>{playingId === selectedSermon.id ? 'Pause' : 'Play Now'}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.modalActionBtnOutline} onPress={() => selectedSermon.url && handleOpenUrl(selectedSermon.url)}>
-                    <Text style={styles.modalActionBtnOutlineText}>⬇  Download</Text>
+                    <Text style={styles.modalActionBtnOutlineText}>Download</Text>
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.modalShareBtn}>
-                  <Text style={styles.modalShareBtnText}>↗  Share this Sermon</Text>
+                <TouchableOpacity style={styles.modalShareBtn} onPress={() => handleShareSermon(selectedSermon)} accessibilityRole="button">
+                  <Text style={styles.modalShareBtnText}>Share this Sermon</Text>
                 </TouchableOpacity>
                 <View style={{ height: 20 }} />
               </ScrollView>
@@ -575,7 +621,7 @@ export default function ResourcesScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <TouchableOpacity style={styles.modalClose} onPress={() => setStudyModal(false)}>
-              <Text style={styles.modalCloseText}>✕</Text>
+              <AppIcon name="close" size={15} color={COLORS.textMuted} />
             </TouchableOpacity>
             {selectedStudy && (
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalContent}>
@@ -592,7 +638,7 @@ export default function ResourcesScreen() {
                           <Text style={[styles.typeBadgeText, { color: levelConfig.color }]}>{selectedStudy.level}</Text>
                         </View>
                         <View style={[styles.typeBadge, { backgroundColor: 'rgba(201,168,76,0.1)', borderColor: COLORS.gold }]}>
-                          <Text style={[styles.typeBadgeText, { color: COLORS.gold }]}>📖 {selectedStudy.book}</Text>
+                          <Text style={[styles.typeBadgeText, { color: COLORS.gold }]}>{selectedStudy.book}</Text>
                         </View>
                       </View>
 
@@ -604,19 +650,19 @@ export default function ResourcesScreen() {
                       {/* Study info row */}
                       <View style={styles.studyInfoRow}>
                         <View style={styles.studyInfoItem}>
-                          <Text style={styles.studyInfoIcon}>📚</Text>
+                          <AppIcon name="resources" size={18} color={COLORS.gold} />
                           <Text style={styles.studyInfoValue}>{lessons.length}</Text>
                           <Text style={styles.studyInfoLabel}>Lessons</Text>
                         </View>
                         <View style={styles.studyInfoDivider} />
                         <View style={styles.studyInfoItem}>
-                          <Text style={styles.studyInfoIcon}>🎯</Text>
+                          <AppIcon name="star" size={18} color={COLORS.gold} />
                           <Text style={[styles.studyInfoValue, { color: levelConfig.color }]}>{selectedStudy.level}</Text>
                           <Text style={styles.studyInfoLabel}>Level</Text>
                         </View>
                         <View style={styles.studyInfoDivider} />
                         <View style={styles.studyInfoItem}>
-                          <Text style={styles.studyInfoIcon}>📖</Text>
+                          <AppIcon name="bible" size={18} color={COLORS.gold} />
                           <Text style={styles.studyInfoValue} numberOfLines={1}>{selectedStudy.book}</Text>
                           <Text style={styles.studyInfoLabel}>Book</Text>
                         </View>
@@ -644,7 +690,7 @@ export default function ResourcesScreen() {
                                 <View style={styles.lessonItemInfo}>
                                   <Text style={styles.lessonItemTitle}>{lesson.title}</Text>
                                   {lesson.scripture && (
-                                    <Text style={styles.lessonItemScripture}>📖 {lesson.scripture}</Text>
+                                    <Text style={styles.lessonItemScripture}>{lesson.scripture}</Text>
                                   )}
                                 </View>
                                 <Text style={[styles.lessonArrow, { color: levelConfig.color }]}>›</Text>
@@ -654,7 +700,7 @@ export default function ResourcesScreen() {
                         </>
                       ) : (
                         <View style={styles.noLessonsBox}>
-                          <Text style={styles.noLessonsText}>📝 Lesson content coming soon</Text>
+                          <Text style={styles.noLessonsText}>Lesson content coming soon</Text>
                         </View>
                       )}
 
@@ -664,7 +710,7 @@ export default function ResourcesScreen() {
                           onPress={() => openLesson(lessons[0], 0)}
                           activeOpacity={0.85}
                         >
-                          <Text style={styles.startStudyBtnText}>▶  Begin Lesson 1</Text>
+                          <Text style={styles.startStudyBtnText}>Begin Lesson 1</Text>
                         </TouchableOpacity>
                       )}
 
@@ -704,7 +750,7 @@ export default function ResourcesScreen() {
                 )}
               </View>
               <TouchableOpacity style={styles.lessonCloseBtn} onPress={() => setLessonModal(false)}>
-                <Text style={styles.lessonCloseBtnText}>✕</Text>
+                <AppIcon name="close" size={15} color={COLORS.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -731,7 +777,7 @@ export default function ResourcesScreen() {
                 {selectedLesson.scripture && (
                   <View style={styles.lessonScriptureCard}>
                     <Text style={styles.lessonScriptureLabel}>SCRIPTURE</Text>
-                    <Text style={styles.lessonScripture}>📖 {selectedLesson.scripture}</Text>
+                    <Text style={styles.lessonScripture}>{selectedLesson.scripture}</Text>
                   </View>
                 )}
 
@@ -792,7 +838,7 @@ export default function ResourcesScreen() {
                 {/* Finished */}
                 {currentLessonIndex === (selectedStudy?.lessonItems?.length || 0) - 1 && (
                   <View style={styles.lessonCompleteCard}>
-                    <Text style={styles.lessonCompleteIcon}>🎉</Text>
+                    <AppIcon name="check" size={44} color={COLORS.teal} />
                     <Text style={styles.lessonCompleteTitle}>Study Complete!</Text>
                     <Text style={styles.lessonCompleteText}>
                       You have completed all {selectedStudy?.lessonItems?.length} lessons of {selectedStudy?.title}.
@@ -801,7 +847,7 @@ export default function ResourcesScreen() {
                       style={[styles.lessonCompleteBtn, { backgroundColor: LEVEL_CONFIG[selectedStudy?.level]?.color || COLORS.gold }]}
                       onPress={() => setLessonModal(false)}
                     >
-                      <Text style={styles.lessonCompleteBtnText}>✓  Finish Study</Text>
+                      <Text style={styles.lessonCompleteBtnText}>Finish Study</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -839,7 +885,7 @@ const EmptyState = ({ icon, text, subText, onReset }) => (
 
 const ModalMeta = ({ icon, label, value, full }) => (
   <View style={[styles.modalMetaItem, full && styles.modalMetaItemFull]}>
-    <Text style={styles.modalMetaIcon}>{icon}</Text>
+    <AppIcon name={icon} size={16} color={COLORS.gold} style={styles.modalMetaIcon} />
     <View style={{ flex: 1 }}>
       <Text style={styles.modalMetaLabel}>{label}</Text>
       <Text style={styles.modalMetaValue}>{value}</Text>

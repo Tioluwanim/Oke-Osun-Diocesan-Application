@@ -5,7 +5,7 @@ from typing import Literal, Optional
 class RegisterRequest(BaseModel):
     fullName: str
     email: EmailStr
-    password: str = Field(min_length=6)
+    password: str = Field(min_length=8)
     role: Literal["member","clergy"]
     parish: Optional[str] = None
 
@@ -26,10 +26,11 @@ class UpdateProfileRequest(BaseModel):
     fullName: Optional[str] = None
     phone: Optional[str] = None
     parish: Optional[str] = None
+    photoUrl: Optional[str] = None
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
-    new_password: str = Field(min_length=6)
+    new_password: str = Field(min_length=8)
 
 
 class InviteUserRequest(BaseModel):

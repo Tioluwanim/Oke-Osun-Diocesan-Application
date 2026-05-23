@@ -9,10 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Keyboard,
 } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import LoadingButton from '../../components/ui/LoadingButton';
+import AppIcon from '../../components/ui/AppIcon';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -41,7 +43,7 @@ export default function LoginScreen({ navigation }) {
       const result = await verifyLogin(email.trim().toLowerCase(), password);
 
       if (result.success) {
-        await login(result.user, result.token);
+        await login(result.user, result.accessToken, result.refreshToken);
       } else {
         setError(result.message);
         setIsLoading(false);
@@ -61,6 +63,7 @@ export default function LoginScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.circle1} />
@@ -82,7 +85,10 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.form}>
             {error ? (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>⚠ {error}</Text>
+                <View style={styles.errorRow}>
+                  <AppIcon name="alert" size={16} color={COLORS.red} />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
               </View>
             ) : null}
 
@@ -90,7 +96,7 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email Address</Text>
               <View style={[styles.inputWrapper, focusedInput === 'email' && styles.inputWrapperFocused]}>
-                <Text style={styles.inputIcon}>✉</Text>
+                <AppIcon name="email" size={18} color={COLORS.textMuted} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="your@email.com"
@@ -110,7 +116,7 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={[styles.inputWrapper, focusedInput === 'password' && styles.inputWrapperFocused]}>
-                <Text style={styles.inputIcon}>🔒</Text>
+                <AppIcon name="lock" size={18} color={COLORS.textMuted} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your password"
@@ -122,23 +128,18 @@ export default function LoginScreen({ navigation }) {
                   onFocus={() => setFocusedInput('password')}
                   onBlur={() => setFocusedInput(null)}
                 />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Text style={styles.inputIcon}>{showPassword ? '🙈' : '👁'}</Text>
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+                  <AppIcon name={showPassword ? 'eyeOff' : 'eye'} size={18} color={COLORS.textMuted} />
                 </TouchableOpacity>
               </View>
             </View>
-
-            {/* Forgot password */}
-            <TouchableOpacity style={styles.forgotContainer}>
-              <Text style={styles.forgotText}>Forgot Password?</Text>
-            </TouchableOpacity>
 
             {/* Login Button */}
             <LoadingButton
               title="Sign In"
               loading={isLoading}
               loadingText="Signing In"
-              onPress={handleLogin}
+              onPress={() => { Keyboard.dismiss(); handleLogin(); }}
               style={styles.loginButton}
             />
 
@@ -244,7 +245,9 @@ const styles = StyleSheet.create({
   errorText: {
     color: COLORS.red,
     fontSize: FONTS.sizes.sm,
+    flex: 1,
   },
+  errorRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
   inputGroup: {
     marginBottom: SPACING.md,
   },
@@ -270,9 +273,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
   },
   inputIcon: {
-    fontSize: 16,
     marginRight: SPACING.sm,
-    color: COLORS.textMuted,
   },
   input: {
     flex: 1,

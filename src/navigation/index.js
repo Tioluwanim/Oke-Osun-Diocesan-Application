@@ -1,4 +1,5 @@
 import React from 'react';
+import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -64,7 +65,7 @@ const RootNavigator = () => {
 
 export default function Navigation() {
   return (
-    <NavigationContainer>
+    <NavigationContainer onReady={() => SplashScreen.hideAsync().catch(() => {})}>
       <RootNavigator />
     </NavigationContainer>
   );

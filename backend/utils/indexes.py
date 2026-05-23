@@ -5,6 +5,7 @@ async def create_indexes():
         await db.users.create_index("email", unique=True)
         await db.users.create_index("role")
         await db.users.create_index("status")
+        await db.users.create_index("inviteTokenHash", unique=True, sparse=True)
 
         # Sermons
         await db.sermons.create_index("createdAt")
