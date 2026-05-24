@@ -17,6 +17,7 @@ import ResourcesScreen from '../screens/main/SermonsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import ManageScreen from '../screens/admin/ManageScreen';
 import UserManagementScreen from '../screens/admin/UserManagementScreen';
+import PaymentDashboardScreen from '../screens/admin/PaymentDashboardScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -53,6 +54,7 @@ const TABS = [
   { name: 'Resources', icon: 'resources', label: 'Sermons', component: ResourcesScreen, color: COLORS.gold },
   { name: 'Manage', icon: 'privacy', label: 'Manage', component: ManageScreen, color: COLORS.red },
   { name: 'UserManagement', icon: 'people-outline', label: 'Users', component: UserManagementScreen, color: COLORS.red },
+  { name: 'Payments', icon: 'payment', label: 'Offerings', component: PaymentDashboardScreen, color: COLORS.gold },
   { name: 'Profile', icon: 'person', label: 'Profile', component: ProfileScreen, color: COLORS.gold },
 ];
 

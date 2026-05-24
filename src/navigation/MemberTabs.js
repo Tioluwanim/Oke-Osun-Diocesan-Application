@@ -16,6 +16,7 @@ import EventsScreen from '../screens/main/EventsScreen';
 import LiveScreen from '../screens/main/LiveScreen';
 import ResourcesScreen from '../screens/main/SermonsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
+import GiveScreen from '../screens/main/GiveScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -68,6 +69,7 @@ const TABS = [
   { name: 'Events', icon: 'calendar', label: 'Events', component: EventsScreen },
   { name: 'Live', icon: 'live', label: 'Live', component: LiveScreen },
   { name: 'Resources', icon: 'resources', label: 'Resources', component: ResourcesScreen },
+  { name: 'Give', icon: 'give', label: 'Give', component: GiveScreen },
   { name: 'Profile', icon: 'person', label: 'Profile', component: ProfileScreen },
 ];
 

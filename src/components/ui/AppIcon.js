@@ -41,6 +41,9 @@ const ICONS = {
   time: 'time-outline',
   upload: 'camera-outline',
   video: 'videocam-outline',
+  give: 'gift-outline',
+  payment: 'card-outline',
+  tithe: 'leaf-outline',
 };
 
 export default function AppIcon({ name, size = 20, color = COLORS.textMuted, style, accessibilityLabel }) {

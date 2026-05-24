@@ -19,6 +19,8 @@ import LiveScreen from '../screens/main/LiveScreen';
 import ResourcesScreen from '../screens/main/SermonsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import ParishScreen from '../screens/clergy/ParishScreen';
+import GiveScreen from '../screens/main/GiveScreen';
+import GiveScreen from '../screens/main/GiveScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -68,6 +70,7 @@ const TABS = [
   { name: 'Live',      icon: 'live', label: 'Live',      component: LiveScreen,      color: COLORS.red  },
   { name: 'Resources', icon: 'resources', label: 'Resources', component: ResourcesScreen, color: COLORS.gold },
   { name: 'Parish',    icon: 'church', label: 'Parish',    component: ParishScreen,    color: COLORS.teal },
+  { name: 'Give',      icon: 'give',   label: 'Give',      component: GiveScreen,      color: COLORS.gold },
   { name: 'Profile',   icon: 'person', label: 'Profile',   component: ProfileScreen,   color: COLORS.gold },
 ];
 

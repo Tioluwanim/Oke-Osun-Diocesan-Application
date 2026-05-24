@@ -30,6 +30,7 @@ from routes.magazines import router as magazines_router
 from routes.bible_studies import router as bible_studies_router
 from routes.documents import router as documents_router
 from routes.uploads import router as uploads_router
+from routes.payments import router as payments_router
 
 
 # ── Startup/Shutdown lifecycle ──
@@ -143,6 +144,7 @@ app.include_router(magazines_router,     prefix="/magazines",     tags=["Magazin
 app.include_router(bible_studies_router, prefix="/bible-studies", tags=["Bible Studies"])
 app.include_router(documents_router,     prefix="/documents",     tags=["Documents"])
 app.include_router(uploads_router,       prefix="/uploads",       tags=["Uploads"])
+app.include_router(payments_router,      prefix="/payments",      tags=["Payments"])
 
 
 @app.get("/health")

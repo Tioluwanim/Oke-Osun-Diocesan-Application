@@ -39,6 +39,15 @@ async def create_indexes():
         # Live Stream
         await db.live_stream.create_index("updatedAt")
 
+        # Payments
+        await db.payments.create_index("reference", unique=True)
+        await db.payments.create_index("userId")
+        await db.payments.create_index("status")
+        await db.payments.create_index("type")
+        await db.payments.create_index("createdAt")
+        await db.payments.create_index("paidAt")
+        await db.payments.create_index("parish")
+
         print("✅ MongoDB indexes created")
 
     except Exception as e:

@@ -48,6 +48,12 @@ export const API_ROUTES = {
   documentReject:    (id) => `${API_BASE_URL}/documents/${id}/reject`,
   auditLogs:     `${API_BASE_URL}/admin/audit-logs`,
   uploads:       `${API_BASE_URL}/uploads`,
+  // ── Payments ──
+  paymentsInitiate:  `${API_BASE_URL}/payments/initiate`,
+  paymentsVerify:    (ref) => `${API_BASE_URL}/payments/verify/${ref}`,
+  paymentsMyHistory: `${API_BASE_URL}/payments/my`,
+  paymentsAdminAll:  `${API_BASE_URL}/payments/admin/all`,
+  paymentsWebhook:   `${API_BASE_URL}/payments/webhook`,
 };
 
 export const ROLES = {
