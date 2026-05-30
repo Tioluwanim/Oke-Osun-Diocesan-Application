@@ -1,49 +1,29 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  RefreshControl,
-  StatusBar,
-  Platform,
-  Animated,
-  useWindowDimensions,
+  View, Text, Image, ScrollView, TouchableOpacity,
+  StyleSheet, RefreshControl, StatusBar, Animated, useWindowDimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
-import SkeletonCard from '../../components/ui/SkeletonCard';
-import EmptyState from '../../components/ui/EmptyState';
-import AppIcon from '../../components/ui/AppIcon';
-import usePrefetch from '../../hooks/usePrefetch';
+import { getGreeting, isFutureDate, formatDate } from '../../utils/format';
+import SkeletonCard    from '../../components/ui/SkeletonCard';
+import EmptyState      from '../../components/ui/EmptyState';
+import AppIcon         from '../../components/ui/AppIcon';
+import SectionHeader   from '../../components/cards/SectionHeader';
+import FeatureCard     from '../../components/cards/FeatureCard';
+import ScreenHeader    from '../../components/layout/ScreenHeader';
+import usePrefetch     from '../../hooks/usePrefetch';
 import { prefetchHomeFeeds } from '../../lib/prefetch';
 import { queryFns, queryKeys } from '../../lib/api';
 
 const QUICK_ACTIONS = [
-  { icon: 'live', label: 'Watch Live', screen: 'Live', color: 'rgba(201,76,76,0.12)' },
-  { icon: 'audio', label: 'Sermons', screen: 'Resources', color: 'rgba(201,168,76,0.12)' },
-  { icon: 'calendar', label: 'Events', screen: 'Events', color: 'rgba(76,138,201,0.12)' },
-  { icon: 'person', label: 'Profile', screen: 'Profile', color: 'rgba(76,201,168,0.12)' },
+  { icon: 'live',     label: 'Watch Live', screen: 'Live',      accent: 'rgba(201,76,76,0.12)' },
+  { icon: 'audio',    label: 'Sermons',    screen: 'Resources', accent: 'rgba(201,168,76,0.12)' },
+  { icon: 'calendar', label: 'Events',     screen: 'Events',    accent: 'rgba(76,138,201,0.12)' },
+  { icon: 'give',     label: 'Give',       screen: 'Give',      accent: 'rgba(76,201,168,0.12)' },
 ];
-
-const formatDate = (value) => {
-  if (!value) return 'TBA';
-  try {
-    return new Date(value).toDateString();
-  } catch {
-    return value;
-  }
-};
-
-const isFutureEvent = (event) => {
-  if (!event?.date) return false;
-  const eventDate = new Date(event.date);
-  return !Number.isNaN(eventDate.getTime()) && eventDate >= new Date(new Date().setHours(0, 0, 0, 0));
-};
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
@@ -52,28 +32,27 @@ export default function HomeScreen({ navigation }) {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
   const pulse = useRef(new Animated.Value(0)).current;
-  const cardBasis = width >= 900 ? '24%' : '48%';
 
-  const { data: liveStream, isLoading: isLiveLoading } = useQuery({
-    queryKey: queryKeys.live,
-    queryFn: queryFns.live,
-  });
-  const { data: events = [], isLoading: isEventsLoading } = useQuery({
-    queryKey: queryKeys.events,
-    queryFn: queryFns.events,
-  });
-  const { data: sermons = [], isLoading: isSermonsLoading } = useQuery({
-    queryKey: queryKeys.sermons,
-    queryFn: queryFns.sermons,
-  });
-  const { data: parishes = [], isLoading: isParishesLoading } = useQuery({
-    queryKey: queryKeys.parishes,
-    queryFn: queryFns.parishes,
-  });
+  const { data: liveStream,  isLoading: ll } = useQuery({ queryKey: queryKeys.live,     queryFn: queryFns.live });
+  const { data: events = [], isLoading: el } = useQuery({ queryKey: queryKeys.events,   queryFn: queryFns.events });
+  const { data: sermons = [], isLoading: sl } = useQuery({ queryKey: queryKeys.sermons,  queryFn: queryFns.sermons });
+  const { data: parishes = [], isLoading: pl } = useQuery({ queryKey: queryKeys.parishes, queryFn: queryFns.parishes });
+  const isLoading = ll || el || sl || pl;
 
+  useEffect(() => { prefetchHomeFeeds(prefetch); }, [prefetch]);
+
+  // Pulse animation for LIVE badge
   useEffect(() => {
-    prefetchHomeFeeds(prefetch);
-  }, [prefetch]);
+    if (!liveStream?.isLive) return;
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 1100, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 1100, useNativeDriver: true }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [liveStream?.isLive, pulse]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -82,230 +61,134 @@ export default function HomeScreen({ navigation }) {
       queryClient.invalidateQueries({ queryKey: queryKeys.events }),
       queryClient.invalidateQueries({ queryKey: queryKeys.sermons }),
       queryClient.invalidateQueries({ queryKey: queryKeys.parishes }),
-      prefetchHomeFeeds(prefetch),
     ]);
     setRefreshing(false);
   };
 
-  const nextEvent = useMemo(
-    () => events.filter(isFutureEvent).sort((a, b) => new Date(a.date) - new Date(b.date))[0] || null,
-    [events]
-  );
+  const nextEvent   = useMemo(() => events.filter(e => isFutureDate(e.date)).sort((a,b) => new Date(a.date) - new Date(b.date))[0] || null, [events]);
+  const latestSermon = useMemo(() => sermons[0] || null, [sermons]);
 
-  const latestSermon = useMemo(
-    () => sermons[0] || null,
-    [sermons]
-  );
-
-  const updates = useMemo(() => {
-    const eventUpdates = events.slice(0, 2).map((event) => ({
-      id: `event-${event.id}`,
-      tag: event.category || 'Event',
-      color: COLORS.gold,
-      title: event.title,
-      body: event.location || event.parish || 'Diocesan event',
-      date: formatDate(event.date),
-    }));
-
-    const sermonUpdates = sermons.slice(0, 1).map((sermon) => ({
-      id: `sermon-${sermon.id}`,
-      tag: 'Sermon',
-      color: COLORS.teal,
-      title: sermon.title,
-      body: sermon.preacher || sermon.parish || 'New sermon available',
-      date: formatDate(sermon.createdAt),
-    }));
-
-    return [...eventUpdates, ...sermonUpdates];
-  }, [events, sermons]);
-
-  const stats = useMemo(() => ([
-    { label: 'Events', value: String(events.length), icon: 'calendar' },
-    { label: 'Sermons', value: String(sermons.length), icon: 'audio' },
+  const stats = useMemo(() => [
+    { label: 'Events',   value: String(events.length),   icon: 'calendar' },
+    { label: 'Sermons',  value: String(sermons.length),  icon: 'audio' },
     { label: 'Parishes', value: String(parishes.length), icon: 'church' },
-    { label: 'Live', value: liveStream?.isLive ? 'On' : 'Off', icon: 'live' },
-  ]), [events.length, sermons.length, parishes.length, liveStream?.isLive]);
+    { label: 'Live',     value: liveStream?.isLive ? 'On' : 'Off', icon: 'live' },
+  ], [events.length, sermons.length, parishes.length, liveStream?.isLive]);
 
-  const isLoading = isLiveLoading || isEventsLoading || isSermonsLoading || isParishesLoading;
+  const updates = useMemo(() => [
+    ...events.slice(0, 2).map(e => ({ id: `e-${e.id}`, tag: e.category || 'Event', color: COLORS.gold, title: e.title, body: e.location || 'Diocesan event', date: formatDate(e.date) })),
+    ...sermons.slice(0, 1).map(s => ({ id: `s-${s.id}`, tag: 'Sermon', color: COLORS.teal, title: s.title, body: s.preacher || 'Diocese clergy', date: formatDate(s.createdAt) })),
+  ], [events, sermons]);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  };
-
-  const getFirstName = () => {
-    if (!user?.fullName) return 'Beloved';
-    return user.fullName.split(' ')[0];
-  };
-
-  const navigateWithPrefetch = (screen) => {
+  const nav = (screen) => {
     Haptics.selectionAsync().catch(() => {});
-    prefetchHomeFeeds(prefetch);
-    if (screen) navigation.navigate(screen);
+    navigation.navigate(screen);
   };
 
-  useEffect(() => {
-    if (!liveStream?.isLive) return undefined;
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 1200, useNativeDriver: true }),
-      ])
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [liveStream?.isLive, pulse]);
-
+  const cardBasis = width >= 900 ? '24%' : '48%';
   const pulseStyle = {
-    opacity: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] }),
-    transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.18] }) }],
+    opacity:   pulse.interpolate({ inputRange: [0,1], outputRange: [0.4, 1] }),
+    transform: [{ scale: pulse.interpolate({ inputRange: [0,1], outputRange: [0.88, 1.2] }) }],
   };
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.surface} />
 
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Image
-            source={require('../../../assets/logo.png')}
-            style={styles.headerLogo}
-            resizeMode="contain"
-          />
+          <Image source={require('../../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
           <View>
-            <Text style={styles.headerGreeting}>{getGreeting()}, {getFirstName()}</Text>
-            <Text style={styles.headerSubtitle}>Diocese of Oke-Osun</Text>
+            <Text style={styles.greeting}>{getGreeting()}, {user?.fullName?.split(' ')[0] || 'Beloved'}</Text>
+            <Text style={styles.diocese}>Diocese of Oke-Osun</Text>
           </View>
         </View>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={(
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={COLORS.gold}
-            colors={[COLORS.gold]}
-          />
-        )}
+        contentContainerStyle={styles.scroll}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.gold} colors={[COLORS.gold]} />}
       >
+        {/* LIVE banner */}
         {liveStream?.isLive && (
-          <TouchableOpacity
-            style={styles.liveBanner}
-            onPress={() => navigateWithPrefetch('Live')}
-            activeOpacity={0.85}
-          >
+          <TouchableOpacity style={styles.liveBanner} onPress={() => nav('Live')} activeOpacity={0.85}>
             <Animated.View style={[styles.livePulse, pulseStyle]}>
               <View style={styles.liveDot} />
             </Animated.View>
-            <Text style={styles.liveBannerText}>
-              LIVE NOW - {liveStream.title || 'Sunday Service'}
-            </Text>
-            <View style={styles.liveJoinBtn}>
-              <Text style={styles.liveJoinText}>Join</Text>
-            </View>
+            <Text style={styles.liveBannerText}>LIVE NOW · {liveStream.title || 'Sunday Service'}</Text>
+            <View style={styles.liveJoin}><Text style={styles.liveJoinText}>Join</Text></View>
           </TouchableOpacity>
         )}
 
+        {/* Stats */}
         <View style={styles.statsRow}>
-          {stats.map((stat) => (
-            <View key={stat.label} style={[styles.statCard, { flexBasis: cardBasis, maxWidth: cardBasis }]}>
-              <AppIcon name={stat.icon} size={20} color={COLORS.gold} style={styles.statIcon} />
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+          {stats.map(s => (
+            <View key={s.label} style={[styles.statCard, { flexBasis: cardBasis, maxWidth: cardBasis }]}>
+              <AppIcon name={s.icon} size={20} color={COLORS.gold} style={styles.statIcon} />
+              <Text style={styles.statValue}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
             </View>
           ))}
         </View>
 
-        <SectionHeader title="Next Event" onSeeAll={() => navigateWithPrefetch('Events')} />
-        {isLoading ? (
-          <SkeletonCard />
-        ) : nextEvent ? (
-          <TouchableOpacity style={styles.featureCard} onPress={() => navigateWithPrefetch('Events')} activeOpacity={0.85}>
-            <View style={styles.featureAccent} />
-            <View style={styles.featureBody}>
-              <Text style={styles.featureTag}>{nextEvent.category || 'Event'}</Text>
-              <Text style={styles.featureTitle}>{nextEvent.title}</Text>
-              <Text style={styles.featureMeta}>{formatDate(nextEvent.date)} {nextEvent.time ? `- ${nextEvent.time}` : ''}</Text>
-              <Text style={styles.featureDescription}>{nextEvent.location || nextEvent.parish || 'Diocesan calendar'}</Text>
-            </View>
-          </TouchableOpacity>
-        ) : (
-          <EmptyState
-            icon="calendar"
-            title="No upcoming events"
-            description="New diocesan events will appear here."
-          />
-        )}
+        {/* Next Event */}
+        <SectionHeader title="Next Event" onSeeAll={() => nav('Events')} />
+        {isLoading ? <SkeletonCard /> : nextEvent
+          ? <FeatureCard
+              tag={nextEvent.category || 'Event'}
+              title={nextEvent.title}
+              meta={`${formatDate(nextEvent.date)}${nextEvent.time ? ` · ${nextEvent.time}` : ''}`}
+              description={nextEvent.location || nextEvent.parish}
+              onPress={() => nav('Events')}
+            />
+          : <EmptyState icon="calendar" title="No upcoming events" description="New diocesan events will appear here." />
+        }
 
-        <SectionHeader title="Latest Sermon" onSeeAll={() => navigateWithPrefetch('Resources')} />
-        {isLoading ? (
-          <SkeletonCard />
-        ) : latestSermon ? (
-          <TouchableOpacity style={styles.featureCard} onPress={() => navigateWithPrefetch('Resources')} activeOpacity={0.85}>
-            <View style={[styles.featureAccent, { backgroundColor: COLORS.teal }]} />
-            <View style={styles.featureBody}>
-              <Text style={[styles.featureTag, { color: COLORS.teal }]}>
-                {latestSermon.type || 'Sermon'}
-              </Text>
-              <Text style={styles.featureTitle}>{latestSermon.title}</Text>
-              <Text style={styles.featureMeta}>{latestSermon.preacher || 'Diocese clergy'}</Text>
-              <Text style={styles.featureDescription}>
-                {latestSermon.duration || 'Freshly uploaded'} {latestSermon.series ? `- ${latestSermon.series}` : ''}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ) : (
-          <EmptyState
-            icon="audio"
-            title="No sermons yet"
-            description="Uploaded sermons will appear here."
-          />
-        )}
+        {/* Latest Sermon */}
+        <SectionHeader title="Latest Sermon" onSeeAll={() => nav('Resources')} />
+        {isLoading ? <SkeletonCard /> : latestSermon
+          ? <FeatureCard
+              tag={latestSermon.type || 'Sermon'}
+              tagColor={COLORS.teal}
+              title={latestSermon.title}
+              meta={latestSermon.preacher || 'Diocese clergy'}
+              description={latestSermon.duration || latestSermon.series}
+              onPress={() => nav('Resources')}
+            />
+          : <EmptyState icon="audio" title="No sermons yet" description="Uploaded sermons will appear here." />
+        }
 
+        {/* Quick Actions */}
         <SectionHeader title="Quick Access" />
-        <View style={styles.quickActionsGrid}>
-          {QUICK_ACTIONS.map((action) => (
-            <TouchableOpacity
-              key={action.label}
-              style={[styles.quickAction, { backgroundColor: action.color }]}
-              onPress={() => navigateWithPrefetch(action.screen)}
-              activeOpacity={0.8}
-            >
-              <AppIcon name={action.icon} size={26} color={COLORS.gold} style={styles.quickActionIcon} />
-              <Text style={styles.quickActionLabel}>{action.label}</Text>
+        <View style={styles.quickGrid}>
+          {QUICK_ACTIONS.map(a => (
+            <TouchableOpacity key={a.label} style={[styles.quickCard, { backgroundColor: a.accent }]} onPress={() => nav(a.screen)} activeOpacity={0.8}>
+              <AppIcon name={a.icon} size={26} color={COLORS.gold} />
+              <Text style={styles.quickLabel}>{a.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
+        {/* Recent Updates */}
         <SectionHeader title="Recent Updates" />
-        {isLoading ? (
-          <SkeletonCard />
-        ) : updates.length ? (
-          updates.map((item) => (
-            <View key={item.id} style={styles.updateCard}>
-              <View style={[styles.updateAccent, { backgroundColor: item.color }]} />
-              <View style={styles.updateBody}>
-                <View style={styles.updateTop}>
-                  <Text style={[styles.updateTag, { color: item.color }]}>{item.tag}</Text>
-                  <Text style={styles.updateDate}>{item.date}</Text>
+        {isLoading ? <SkeletonCard /> : updates.length
+          ? updates.map(u => (
+              <View key={u.id} style={styles.updateCard}>
+                <View style={[styles.updateAccent, { backgroundColor: u.color }]} />
+                <View style={styles.updateBody}>
+                  <View style={styles.updateTop}>
+                    <Text style={[styles.updateTag, { color: u.color }]}>{u.tag}</Text>
+                    <Text style={styles.updateDate}>{u.date}</Text>
+                  </View>
+                  <Text style={styles.updateTitle}>{u.title}</Text>
+                  <Text style={styles.updateText}>{u.body}</Text>
                 </View>
-                <Text style={styles.updateTitle}>{item.title}</Text>
-                <Text style={styles.updateText}>{item.body}</Text>
               </View>
-            </View>
-          ))
-        ) : (
-          <EmptyState
-            icon="notification"
-            title="No updates yet"
-            description="Events and sermons will show up here as they are published."
-          />
-        )}
+            ))
+          : <EmptyState icon="notification" title="No updates yet" description="Events and sermons will appear here." />
+        }
 
         <View style={{ height: 110 }} />
       </ScrollView>
@@ -313,269 +196,75 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const SectionHeader = ({ title, onSeeAll }) => (
-  <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    {onSeeAll ? (
-      <TouchableOpacity onPress={onSeeAll}>
-        <Text style={styles.seeAll}>See All</Text>
-      </TouchableOpacity>
-    ) : null}
-  </View>
-);
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
   header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingTop: Platform.OS === 'ios' ? 55 : 45,
-    paddingBottom: SPACING.md,
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    paddingTop: 44, paddingBottom: SPACING.md,
+    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  headerLogo: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-  },
-  headerGreeting: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.bold,
-    color: COLORS.text,
-  },
-  headerSubtitle: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.gold,
-    letterSpacing: 0.5,
-  },
-  scrollContent: {
-    paddingBottom: SPACING.lg,
-  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  logo: { width: 42, height: 42, borderRadius: 21 },
+  greeting: { fontSize: FONTS.sizes.md, fontWeight: FONTS.weights.bold, color: COLORS.text },
+  diocese:  { fontSize: FONTS.sizes.xs, color: COLORS.gold, letterSpacing: 0.5 },
+  scroll: { paddingBottom: SPACING.lg },
+
   liveBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginHorizontal: SPACING.lg,
-    marginTop: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    elevation: 6,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: COLORS.surfaceElevated, borderWidth: 1, borderColor: COLORS.border,
+    marginHorizontal: SPACING.lg, marginTop: SPACING.lg,
+    borderRadius: RADIUS.xl, padding: SPACING.md, gap: SPACING.sm,
+    elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 18,
   },
   livePulse: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 22, height: 22, borderRadius: 11,
     backgroundColor: 'rgba(201,76,76,0.18)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
   },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.red,
-  },
-  liveBannerText: {
-    flex: 1,
-    color: COLORS.red,
-    fontWeight: FONTS.weights.bold,
-    fontSize: FONTS.sizes.sm,
-  },
-  liveJoinBtn: {
-    backgroundColor: COLORS.red,
-    borderRadius: RADIUS.full,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 5,
-  },
-  liveJoinText: {
-    color: '#fff',
-    fontSize: FONTS.sizes.xs,
-    fontWeight: FONTS.weights.bold,
-  },
+  liveDot:       { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.red },
+  liveBannerText: { flex: 1, color: COLORS.red, fontWeight: FONTS.weights.bold, fontSize: FONTS.sizes.sm },
+  liveJoin:      { backgroundColor: COLORS.red, borderRadius: RADIUS.full, paddingHorizontal: SPACING.md, paddingVertical: 5 },
+  liveJoinText:  { color: '#fff', fontSize: FONTS.sizes.xs, fontWeight: FONTS.weights.bold },
+
   statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between',
+    gap: SPACING.sm, paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg,
   },
   statCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.xl,
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-    minWidth: 150,
-    marginBottom: SPACING.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    elevation: 4,
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: RADIUS.xl, paddingVertical: SPACING.md, alignItems: 'center',
+    marginBottom: SPACING.sm, minWidth: 150,
+    elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 14,
   },
-  statIcon: {
-    marginBottom: SPACING.xs,
+  statIcon:  { marginBottom: SPACING.xs },
+  statValue: { fontSize: FONTS.sizes.lg, fontWeight: FONTS.weights.black, color: COLORS.text },
+  statLabel: { fontSize: FONTS.sizes.xs, color: COLORS.textMuted },
+
+  quickGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between',
+    gap: SPACING.sm, paddingHorizontal: SPACING.lg,
   },
-  statValue: {
-    fontSize: FONTS.sizes.lg,
-    fontWeight: FONTS.weights.black,
-    color: COLORS.text,
+  quickCard: {
+    flexBasis: '48%', flexGrow: 0, minWidth: 150,
+    borderRadius: RADIUS.xl, paddingVertical: SPACING.lg,
+    alignItems: 'center', gap: SPACING.xs, marginBottom: SPACING.sm,
+    borderWidth: 1, borderColor: COLORS.border,
+    elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 12,
   },
-  statLabel: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: SPACING.xl,
-    marginBottom: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-  },
-  sectionTitle: {
-    fontSize: FONTS.sizes.lg,
-    fontWeight: FONTS.weights.bold,
-    color: COLORS.text,
-  },
-  seeAll: {
-    color: COLORS.gold,
-    fontSize: FONTS.sizes.sm,
-    fontWeight: FONTS.weights.semibold,
-  },
-  featureCard: {
-    flexDirection: 'row',
-    marginHorizontal: SPACING.lg,
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    elevation: 6,
-  },
-  featureAccent: {
-    width: 6,
-    backgroundColor: COLORS.gold,
-  },
-  featureBody: {
-    flex: 1,
-    padding: SPACING.md,
-    gap: 6,
-  },
-  featureTag: {
-    color: COLORS.gold,
-    fontWeight: FONTS.weights.bold,
-    fontSize: FONTS.sizes.xs,
-    textTransform: 'uppercase',
-  },
-  featureTitle: {
-    fontSize: FONTS.sizes.lg,
-    color: COLORS.text,
-    fontWeight: FONTS.weights.bold,
-  },
-  featureMeta: {
-    color: COLORS.textMuted,
-    fontSize: FONTS.sizes.sm,
-  },
-  featureDescription: {
-    color: COLORS.textLight,
-    fontSize: FONTS.sizes.sm,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-  },
-  quickAction: {
-    flexBasis: '48%',
-    maxWidth: '48%',
-    minWidth: 150,
-    borderRadius: RADIUS.xl,
-    paddingVertical: SPACING.lg,
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.13,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  quickActionIcon: {
-    marginBottom: SPACING.xs,
-  },
-  quickActionLabel: {
-    color: COLORS.text,
-    fontWeight: FONTS.weights.semibold,
-  },
+  quickLabel: { color: COLORS.text, fontWeight: FONTS.weights.semibold, fontSize: FONTS.sizes.sm },
+
   updateCard: {
-    flexDirection: 'row',
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.sm,
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    elevation: 4,
+    flexDirection: 'row', marginHorizontal: SPACING.lg, marginBottom: SPACING.sm,
+    backgroundColor: COLORS.surfaceElevated, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: RADIUS.xl, overflow: 'hidden',
+    elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 14,
   },
-  updateAccent: {
-    width: 4,
-  },
-  updateBody: {
-    flex: 1,
-    padding: SPACING.md,
-    gap: 4,
-  },
-  updateTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  updateTag: {
-    fontSize: FONTS.sizes.xs,
-    fontWeight: FONTS.weights.bold,
-  },
-  updateDate: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
-  },
-  updateTitle: {
-    color: COLORS.text,
-    fontWeight: FONTS.weights.bold,
-    fontSize: FONTS.sizes.sm,
-  },
-  updateText: {
-    color: COLORS.textLight,
-    fontSize: FONTS.sizes.sm,
-  },
+  updateAccent: { width: 4 },
+  updateBody:   { flex: 1, padding: SPACING.md, gap: 4 },
+  updateTop:    { flexDirection: 'row', justifyContent: 'space-between' },
+  updateTag:    { fontSize: FONTS.sizes.xs, fontWeight: FONTS.weights.bold },
+  updateDate:   { fontSize: FONTS.sizes.xs, color: COLORS.textMuted },
+  updateTitle:  { color: COLORS.text, fontWeight: FONTS.weights.bold, fontSize: FONTS.sizes.sm },
+  updateText:   { color: COLORS.textLight, fontSize: FONTS.sizes.sm },
 });
