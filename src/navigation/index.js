@@ -1,11 +1,11 @@
 import React from 'react';
-import * as SplashScreen from 'expo-splash-screen';
+import * as ExpoSplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import PageLoader from '../components/ui/PageLoader';
 
-import SplashScreen from '../screens/auth/SplashScreen';
+import AuthSplashScreen from '../screens/auth/SplashScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import PendingApprovalScreen from '../screens/auth/PendingApprovalScreen';
@@ -28,7 +28,7 @@ const AuthStack = () => (
       animationDuration: 300,
     }}
   >
-    <Stack.Screen name="Splash" component={SplashScreen} />
+    <Stack.Screen name="Splash" component={AuthSplashScreen} />
     <Stack.Screen name="Login" component={LoginScreen} options={{ animation: 'slide_from_right' }} />
     <Stack.Screen name="Register" component={RegisterScreen} options={{ animation: 'slide_from_right' }} />
     <Stack.Screen name="PendingApproval" component={PendingApprovalScreen} options={{ animation: 'slide_from_right' }} />
@@ -65,7 +65,7 @@ const RootNavigator = () => {
 
 export default function Navigation() {
   return (
-    <NavigationContainer onReady={() => SplashScreen.hideAsync().catch(() => {})}>
+    <NavigationContainer onReady={() => ExpoSplashScreen.hideAsync().catch(() => {})}>
       <RootNavigator />
     </NavigationContainer>
   );

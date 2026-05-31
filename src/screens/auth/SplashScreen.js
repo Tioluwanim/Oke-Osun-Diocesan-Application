@@ -11,7 +11,7 @@ import { COLORS, FONTS, SPACING } from '../../constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
-export default function SplashScreen({ navigation }) {
+export default function AuthSplashScreen({ navigation }) {
   const fadeAnim = new Animated.Value(0);
   const scaleAnim = new Animated.Value(0.8);
   const slideAnim = new Animated.Value(30);
