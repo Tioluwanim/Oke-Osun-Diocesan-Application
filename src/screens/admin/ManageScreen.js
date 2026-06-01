@@ -119,6 +119,15 @@ export default function ManageScreen({ navigation }) {
   const [resPickedFile, setResPickedFile] = useState(null);
   const [resUploading, setResUploading] = useState(false);
 
+  // ── Pending submissions state ──
+  const [pendingMags,    setPendingMags]    = useState([]);
+  const [pendingBibles,  setPendingBibles]  = useState([]);
+  const [pendingDocs,    setPendingDocs]    = useState([]);
+  const [loadingPending, setLoadingPending] = useState(false);
+  const [pendingTab,     setPendingTab]     = useState('magazines');
+  const [approvingId,    setApprovingId]    = useState(null);
+  const [rejectingId,    setRejectingId]    = useState(null);
+
   // ── Auth headers ──
   const authHeaders = {
     'Content-Type': 'application/json',
@@ -175,6 +184,69 @@ export default function ManageScreen({ navigation }) {
     } catch {}
     finally { setLoadingStream(false); }
   }, []);
+
+  // ── Fetch pending submissions ──
+  const fetchPendingResources = useCallback(async () => {
+    setLoadingPending(true);
+    try {
+      const [magRes, bibleRes, docRes] = await Promise.all([
+        fetch(`${API_ROUTES.magazines}?status=pending`,     { headers: authHeaders }),
+        fetch(`${API_ROUTES.bibleStudies}?status=pending`,  { headers: authHeaders }),
+        fetch(`${API_ROUTES.documents}?status=pending`,     { headers: authHeaders }),
+      ]);
+      const [magData, bibleData, docData] = await Promise.all([magRes.json(), bibleRes.json(), docRes.json()]);
+      if (magRes.ok)   setPendingMags(magData.magazines     || []);
+      if (bibleRes.ok) setPendingBibles(bibleData.bible_studies || []);
+      if (docRes.ok)   setPendingDocs(docData.documents     || []);
+    } catch {}
+    finally { setLoadingPending(false); }
+  }, [token]);
+
+  const handleApproveResource = async (type, id) => {
+    setApprovingId(id);
+    try {
+      const routeMap = {
+        magazine:    API_ROUTES.magazineApprove(id),
+        bible_study: API_ROUTES.bibleStudyApprove(id),
+        document:    API_ROUTES.documentApprove(id),
+      };
+      const res = await fetch(routeMap[type], { method: 'PATCH', headers: authHeaders });
+      if (res.ok) {
+        if (type === 'magazine')    setPendingMags(prev => prev.filter(m => m.id !== id));
+        if (type === 'bible_study') setPendingBibles(prev => prev.filter(b => b.id !== id));
+        if (type === 'document')    setPendingDocs(prev => prev.filter(d => d.id !== id));
+        Alert.alert('✓ Published', 'Resource has been approved and is now visible to members.');
+      } else {
+        Alert.alert('Error', 'Failed to approve resource');
+      }
+    } catch { Alert.alert('Error', 'Network error'); }
+    finally { setApprovingId(null); }
+  };
+
+  const handleRejectResource = async (type, id) => {
+    Alert.alert('Reject Submission', 'This will reject and hide the submission from members.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Reject', style: 'destructive', onPress: async () => {
+        setRejectingId(id);
+        try {
+          const routeMap = {
+            magazine:    API_ROUTES.magazineReject(id),
+            bible_study: API_ROUTES.bibleStudyReject(id),
+            document:    API_ROUTES.documentReject(id),
+          };
+          const res = await fetch(routeMap[type], { method: 'PATCH', headers: authHeaders });
+          if (res.ok) {
+            if (type === 'magazine')    setPendingMags(prev => prev.filter(m => m.id !== id));
+            if (type === 'bible_study') setPendingBibles(prev => prev.filter(b => b.id !== id));
+            if (type === 'document')    setPendingDocs(prev => prev.filter(d => d.id !== id));
+          } else {
+            Alert.alert('Error', 'Failed to reject resource');
+          }
+        } catch { Alert.alert('Error', 'Network error'); }
+        finally { setRejectingId(null); }
+      }},
+    ]);
+  };
 
   // ── Load on tab switch ──
   useEffect(() => {
