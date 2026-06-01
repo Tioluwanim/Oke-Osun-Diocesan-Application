@@ -11,6 +11,7 @@ import {
   Linking,
   Image,
   RefreshControl,
+  Share,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
@@ -54,6 +55,18 @@ export default function LiveScreen() {
 
   const openYouTubeChannel = () => {
     Linking.openURL('https://www.youtube.com/@OkeOsunDiocese');
+  };
+
+  const handleShareStream = async () => {
+    if (!stream) return;
+    const url = youtubeId
+      ? `https://www.youtube.com/watch?v=${youtubeId}`
+      : 'https://www.youtube.com/@OkeOsunDiocese';
+    await Share.share({
+      title: stream.title || 'Live Service — Diocese of Oke-Osun',
+      message: `${stream.title || 'Join our live service'} — Diocese of Oke-Osun\n${url}`,
+      url,
+    }).catch(() => {});
   };
 
   return (
@@ -143,7 +156,7 @@ export default function LiveScreen() {
                     <Text style={styles.watchBtnText}>Watch on YouTube</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.shareBtn}>
+                  <TouchableOpacity style={styles.shareBtn} onPress={handleShareStream} accessibilityRole="button" accessibilityLabel="Share this live stream">
                     <Text style={styles.shareBtnText}>↗ Share Stream</Text>
                   </TouchableOpacity>
                 </View>

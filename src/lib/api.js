@@ -20,7 +20,7 @@ export const registerAuthHandlers = ({ getAccessToken, getRefreshToken, updateTo
 const DEFAULT_TIMEOUT_MS = 15000;
 
 async function requestJson(url, options = {}) {
-  const { retry, timeoutMs, ...fetchOptions } = options;
+  const { auth, retry, timeoutMs, ...fetchOptions } = options;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs || DEFAULT_TIMEOUT_MS);
   try {
@@ -75,7 +75,7 @@ export async function fetchJson(url, options) {
     return data;
   }
 
-  if (response.status === 401 && !options?.retry && authHandlers.getRefreshToken && authHandlers.updateTokens) {
+  if (response.status === 401 && options?.auth === true && !options?.retry && authHandlers.getRefreshToken && authHandlers.updateTokens) {
     try {
       const refreshed = await refreshSession();
       const newAccessToken = refreshed?.accessToken || refreshed?.token || await authHandlers.getAccessToken?.();
@@ -176,54 +176,58 @@ export const authApi = {
   updateProfile: async (payload, token) => fetchJson(API_ROUTES.updateProfile, {
     method: 'PATCH',
     headers: authHeaders(token),
+    auth: true,
     body: JSON.stringify(payload),
   }),
   changePassword: async (payload, token) => fetchJson(API_ROUTES.changePassword, {
     method: 'PATCH',
     headers: authHeaders(token),
+    auth: true,
     body: JSON.stringify(payload),
   }),
 };
 
 export const userApi = {
-  fetchMe: async (token) => fetchJson(API_ROUTES.currentUser, { headers: authHeaders(token) }),
+  fetchMe: async (token) => fetchJson(API_ROUTES.currentUser, { headers: authHeaders(token), auth: true }),
   fetchParishes: async () => queryFns.parishes(),
-  fetchMyParish: async (token) => fetchJson(API_ROUTES.myParish, { headers: authHeaders(token) }),
-  fetchMyParishMembers: async (token) => fetchJson(API_ROUTES.myParishMembers, { headers: authHeaders(token) }),
-  fetchMyParishNotices: async (token) => fetchJson(API_ROUTES.myParishNotices, { headers: authHeaders(token) }),
+  fetchMyParish: async (token) => fetchJson(API_ROUTES.myParish, { headers: authHeaders(token), auth: true }),
+  fetchMyParishMembers: async (token) => fetchJson(API_ROUTES.myParishMembers, { headers: authHeaders(token), auth: true }),
+  fetchMyParishNotices: async (token) => fetchJson(API_ROUTES.myParishNotices, { headers: authHeaders(token), auth: true }),
   createMyParishNotice: async (payload, token) => fetchJson(API_ROUTES.myParishNotices, {
     method: 'POST',
     headers: authHeaders(token),
+    auth: true,
     body: JSON.stringify(payload),
   }),
 };
 
 export const adminApi = {
-  fetchUsers: async (token, query = '') => fetchJson(`${API_ROUTES.adminUsers}${query}`, { headers: authHeaders(token) }),
+  fetchUsers: async (token, query = '') => fetchJson(`${API_ROUTES.adminUsers}${query}`, { headers: authHeaders(token), auth: true }),
   inviteUser: async (payload, token) => fetchJson(API_ROUTES.adminUserInvite, {
     method: 'POST',
     headers: authHeaders(token),
+    auth: true,
     body: JSON.stringify(payload),
   }),
-  approveUser: async (userId, token) => fetchJson(API_ROUTES.adminUserApprove(userId), { method: 'PATCH', headers: authHeaders(token) }),
-  suspendUser: async (userId, token) => fetchJson(API_ROUTES.adminUserSuspend(userId), { method: 'PATCH', headers: authHeaders(token) }),
-  changeUserRole: async (userId, role, token) => fetchJson(API_ROUTES.adminUserRole(userId), { method: 'PATCH', headers: authHeaders(token), body: JSON.stringify({ role }) }),
-  deleteUser: async (userId, token) => fetchJson(API_ROUTES.adminUserById(userId), { method: 'DELETE', headers: authHeaders(token) }),
-  fetchAuditLogs: async (token, query = '') => fetchJson(`${API_ROUTES.auditLogs}${query}`, { headers: authHeaders(token) }),
+  approveUser: async (userId, token) => fetchJson(API_ROUTES.adminUserApprove(userId), { method: 'PATCH', headers: authHeaders(token), auth: true }),
+  suspendUser: async (userId, token) => fetchJson(API_ROUTES.adminUserSuspend(userId), { method: 'PATCH', headers: authHeaders(token), auth: true }),
+  changeUserRole: async (userId, role, token) => fetchJson(API_ROUTES.adminUserRole(userId), { method: 'PATCH', headers: authHeaders(token), auth: true, body: JSON.stringify({ role }) }),
+  deleteUser: async (userId, token) => fetchJson(API_ROUTES.adminUserById(userId), { method: 'DELETE', headers: authHeaders(token), auth: true }),
+  fetchAuditLogs: async (token, query = '') => fetchJson(`${API_ROUTES.auditLogs}${query}`, { headers: authHeaders(token), auth: true }),
 };
 
 export const parishApi = {
-  createParish: async (payload, token) => fetchJson(API_ROUTES.parishes, { method: 'POST', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  updateParish: async (id, payload, token) => fetchJson(API_ROUTES.parishById(id), { method: 'PATCH', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  deleteParish: async (id, token) => fetchJson(API_ROUTES.parishById(id), { method: 'DELETE', headers: authHeaders(token) }),
+  createParish: async (payload, token) => fetchJson(API_ROUTES.parishes, { method: 'POST', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  updateParish: async (id, payload, token) => fetchJson(API_ROUTES.parishById(id), { method: 'PATCH', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  deleteParish: async (id, token) => fetchJson(API_ROUTES.parishById(id), { method: 'DELETE', headers: authHeaders(token), auth: true }),
 };
 
 export const sermonApi = {
   fetchSermons: async (query = '') => fetchJson(`${API_ROUTES.sermons}${query}`),
   fetchSermon: async (id) => fetchJson(API_ROUTES.sermonById(id)),
-  createSermon: async (payload, token) => fetchJson(API_ROUTES.sermons, { method: 'POST', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  updateSermon: async (id, payload, token) => fetchJson(API_ROUTES.sermonById(id), { method: 'PATCH', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  deleteSermon: async (id, token) => fetchJson(API_ROUTES.sermonById(id), { method: 'DELETE', headers: authHeaders(token) }),
+  createSermon: async (payload, token) => fetchJson(API_ROUTES.sermons, { method: 'POST', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  updateSermon: async (id, payload, token) => fetchJson(API_ROUTES.sermonById(id), { method: 'PATCH', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  deleteSermon: async (id, token) => fetchJson(API_ROUTES.sermonById(id), { method: 'DELETE', headers: authHeaders(token), auth: true }),
 };
 
 export const eventApi = {
@@ -232,36 +236,36 @@ export const eventApi = {
     return fetchJson(`${API_ROUTES.events}?page=${page}${separator}${query}`);
   },
   fetchEvent: async (id) => fetchJson(API_ROUTES.eventById(id)),
-  createEvent: async (payload, token) => fetchJson(API_ROUTES.events, { method: 'POST', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  updateEvent: async (id, payload, token) => fetchJson(API_ROUTES.eventById(id), { method: 'PATCH', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  deleteEvent: async (id, token) => fetchJson(API_ROUTES.eventById(id), { method: 'DELETE', headers: authHeaders(token) }),
+  createEvent: async (payload, token) => fetchJson(API_ROUTES.events, { method: 'POST', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  updateEvent: async (id, payload, token) => fetchJson(API_ROUTES.eventById(id), { method: 'PATCH', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  deleteEvent: async (id, token) => fetchJson(API_ROUTES.eventById(id), { method: 'DELETE', headers: authHeaders(token), auth: true }),
 };
 
 export const liveApi = {
   fetchLive: async () => fetchJson(API_ROUTES.live),
-  updateLive: async (payload, token) => fetchJson(API_ROUTES.live, { method: 'PATCH', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  toggleLive: async (token) => fetchJson(API_ROUTES.liveToggle, { method: 'PATCH', headers: authHeaders(token) }),
+  updateLive: async (payload, token) => fetchJson(API_ROUTES.live, { method: 'PATCH', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  toggleLive: async (token) => fetchJson(API_ROUTES.liveToggle, { method: 'PATCH', headers: authHeaders(token), auth: true }),
 };
 
 export const magazineApi = {
   fetchMagazines: async (query = '') => fetchJson(`${API_ROUTES.magazines}${query}`),
-  createMagazine: async (payload, token) => fetchJson(API_ROUTES.magazines, { method: 'POST', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  updateMagazine: async (id, payload, token) => fetchJson(API_ROUTES.magazineById(id), { method: 'PATCH', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  deleteMagazine: async (id, token) => fetchJson(API_ROUTES.magazineById(id), { method: 'DELETE', headers: authHeaders(token) }),
+  createMagazine: async (payload, token) => fetchJson(API_ROUTES.magazines, { method: 'POST', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  updateMagazine: async (id, payload, token) => fetchJson(API_ROUTES.magazineById(id), { method: 'PATCH', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  deleteMagazine: async (id, token) => fetchJson(API_ROUTES.magazineById(id), { method: 'DELETE', headers: authHeaders(token), auth: true }),
 };
 
 export const bibleStudyApi = {
   fetchBibleStudies: async (query = '') => fetchJson(`${API_ROUTES.bibleStudies}${query}`),
   fetchBibleStudy: async (id) => fetchJson(API_ROUTES.bibleStudyById(id)),
-  createBibleStudy: async (payload, token) => fetchJson(API_ROUTES.bibleStudies, { method: 'POST', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  updateBibleStudy: async (id, payload, token) => fetchJson(API_ROUTES.bibleStudyById(id), { method: 'PATCH', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  deleteBibleStudy: async (id, token) => fetchJson(API_ROUTES.bibleStudyById(id), { method: 'DELETE', headers: authHeaders(token) }),
+  createBibleStudy: async (payload, token) => fetchJson(API_ROUTES.bibleStudies, { method: 'POST', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  updateBibleStudy: async (id, payload, token) => fetchJson(API_ROUTES.bibleStudyById(id), { method: 'PATCH', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  deleteBibleStudy: async (id, token) => fetchJson(API_ROUTES.bibleStudyById(id), { method: 'DELETE', headers: authHeaders(token), auth: true }),
 };
 
 export const documentApi = {
   fetchDocuments: async (query = '') => fetchJson(`${API_ROUTES.documents}${query}`),
   fetchDocument: async (id) => fetchJson(API_ROUTES.documentById(id)),
-  createDocument: async (payload, token) => fetchJson(API_ROUTES.documents, { method: 'POST', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  updateDocument: async (id, payload, token) => fetchJson(API_ROUTES.documentById(id), { method: 'PATCH', headers: authHeaders(token), body: JSON.stringify(payload) }),
-  deleteDocument: async (id, token) => fetchJson(API_ROUTES.documentById(id), { method: 'DELETE', headers: authHeaders(token) }),
+  createDocument: async (payload, token) => fetchJson(API_ROUTES.documents, { method: 'POST', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  updateDocument: async (id, payload, token) => fetchJson(API_ROUTES.documentById(id), { method: 'PATCH', headers: authHeaders(token), auth: true, body: JSON.stringify(payload) }),
+  deleteDocument: async (id, token) => fetchJson(API_ROUTES.documentById(id), { method: 'DELETE', headers: authHeaders(token), auth: true }),
 };

@@ -12,10 +12,11 @@
  *
  * The screen itself is < 120 lines of JSX — easy to read, easy to extend.
  */
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   ScrollView, Switch, StyleSheet, StatusBar,
+  Animated,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
@@ -32,14 +33,33 @@ import { useGivePayment } from '../../features/give/hooks/useGivePayment';
 
 const TABS = [{ key: 'give', label: 'Give' }, { key: 'history', label: 'History' }];
 
+const SCRIPTURES = [
+  { verse: '"Bring the whole tithe into the storehouse…"', ref: '— Malachi 3:10' },
+  { verse: '"Each of you should give what you have decided in your heart to give, not reluctantly or under compulsion, for God loves a cheerful giver."', ref: '— 2 Corinthians 9:7' },
+  { verse: '"Give, and it will be given to you. A good measure, pressed down, shaken together and running over…"', ref: '— Luke 6:38' },
+  { verse: '"One person gives freely, yet gains even more; another withholds unduly, but comes to poverty."', ref: '— Proverbs 11:24' },
+];
+
 export default function GiveScreen() {
   const { user } = useAuth();
 
   const [activeTab,    setActiveTab]    = useState('give');
+  const [verseIdx,     setVerseIdx]     = useState(0);
+  const verseFade = useRef(new Animated.Value(1)).current;
   const [selectedType, setSelectedType] = useState('tithe');
   const [amountText,   setAmountText]   = useState('');
   const [description,  setDescription]  = useState('');
   const [anonymous,    setAnonymous]    = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      Animated.timing(verseFade, { toValue: 0, duration: 400, useNativeDriver: true }).start(() => {
+        setVerseIdx(i => (i + 1) % SCRIPTURES.length);
+        Animated.timing(verseFade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+      });
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [verseFade]);
 
   const {
     historyQuery,
@@ -89,11 +109,11 @@ export default function GiveScreen() {
           contentContainerStyle={styles.scroll}
           keyboardDismissMode="on-drag"
         >
-          {/* Scripture */}
-          <View style={styles.scripture}>
-            <Text style={styles.quote}>"Bring the whole tithe into the storehouse…"</Text>
-            <Text style={styles.ref}>— Malachi 3:10</Text>
-          </View>
+          {/* Rotating Scripture */}
+          <Animated.View style={[styles.scripture, { opacity: verseFade }]}>
+            <Text style={styles.quote}>{SCRIPTURES[verseIdx].verse}</Text>
+            <Text style={styles.ref}>{SCRIPTURES[verseIdx].ref}</Text>
+          </Animated.View>
 
           <Text style={styles.sectionLabel}>I AM GIVING AS A</Text>
           <PaymentTypeGrid selected={selectedType} onSelect={setSelectedType} />

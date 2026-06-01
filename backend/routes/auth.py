@@ -1,5 +1,10 @@
 import hashlib
 import logging
+import os
+import secrets
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Request
@@ -257,3 +262,216 @@ async def logout(body: RefreshTokenRequest):
         {"$pull": {"refreshTokens": {"hash": token_hash}}},
     )
     return {"message": "Logged out successfully"}
+
+
+# ──────────────────────────────────────────────────────────────
+#  FORGOT PASSWORD — 3-step flow
+#  Step 1: POST /auth/forgot-password        → send OTP email
+#  Step 2: POST /auth/verify-reset-otp       → verify OTP, get temp token
+#  Step 3: POST /auth/reset-password         → set new password
+# ──────────────────────────────────────────────────────────────
+
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class VerifyOtpRequest(BaseModel):
+    email: str
+    otp: str
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    reset_token: str
+    new_password: str
+
+
+def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
+    """Send OTP via SMTP. Returns True on success, False on failure."""
+    smtp_host     = os.getenv("SMTP_HOST", "")
+    smtp_port     = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user     = os.getenv("SMTP_USER", "")
+    smtp_password = os.getenv("SMTP_PASSWORD", "")
+    from_email    = os.getenv("SMTP_FROM_EMAIL", smtp_user)
+    from_name     = os.getenv("SMTP_FROM_NAME", "Diocese of Oke-Osun")
+
+    if not all([smtp_host, smtp_user, smtp_password]):
+        logger.warning("SMTP not configured — OTP for %s is: %s", to_email, otp)
+        return False
+
+    html = f"""
+    <html><body style="font-family:Georgia,serif;background:#0A0C10;color:#E8E4D8;padding:32px;">
+      <div style="max-width:480px;margin:0 auto;background:#111318;border:1px solid rgba(201,168,76,0.2);border-radius:16px;padding:32px;">
+        <img src="https://storage.googleapis.com/oke-osun-assets/logo.png" width="72" height="72"
+             style="display:block;margin:0 auto 24px;border-radius:50%;" alt="Diocese of Oke-Osun"/>
+        <h2 style="color:#C9A84C;text-align:center;margin-bottom:8px;">Password Reset</h2>
+        <p style="color:#9E9A8E;text-align:center;margin-bottom:28px;">Diocese of Oke-Osun</p>
+        <p>Dear {full_name},</p>
+        <p>We received a request to reset your password. Use the code below — it expires in <strong>15 minutes</strong>.</p>
+        <div style="background:#1B2030;border:1px solid rgba(201,168,76,0.3);border-radius:12px;
+                    padding:24px;text-align:center;margin:24px 0;">
+          <span style="font-size:36px;font-weight:900;letter-spacing:10px;color:#C9A84C;">{otp}</span>
+        </div>
+        <p style="color:#7A7568;font-size:13px;">If you did not request a password reset, you can safely ignore this email.
+        Your account is secure.</p>
+        <hr style="border:none;border-top:1px solid rgba(201,168,76,0.15);margin:24px 0;"/>
+        <p style="color:#7A7568;font-size:12px;text-align:center;">Diocese of Oke-Osun · Anglican Communion</p>
+      </div>
+    </body></html>
+    """
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "Your Diocese Password Reset Code"
+    msg["From"]    = f"{from_name} <{from_email}>"
+    msg["To"]      = to_email
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+            server.ehlo()
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(from_email, [to_email], msg.as_string())
+        logger.info("Reset OTP email sent to %s", to_email)
+        return True
+    except Exception as exc:
+        logger.error("Failed to send reset email to %s: %s", to_email, exc)
+        return False
+
+
+@router.post("/forgot-password")
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, body: ForgotPasswordRequest):
+    """
+    Step 1 — Request a password reset OTP.
+    Always returns 200 to prevent email enumeration.
+    """
+    user = await db.users.find_one({"email": body.email.strip().lower()})
+    if user:
+        otp         = str(secrets.randbelow(900000) + 100000)   # 6-digit OTP
+        otp_hash    = hashlib.sha256(otp.encode()).hexdigest()
+        expires_at  = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+
+        await db.users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {
+                "passwordResetOtpHash":    otp_hash,
+                "passwordResetExpiresAt":  expires_at,
+                "passwordResetAttempts":   0,
+                "updatedAt": utcnow(),
+            }},
+        )
+        _send_reset_email(user["email"], otp, user.get("fullName", "Beloved"))
+
+    return {"message": "If this email is registered, a reset code has been sent."}
+
+
+@router.post("/verify-reset-otp")
+@limiter.limit("5/minute")
+async def verify_reset_otp(request: Request, body: VerifyOtpRequest):
+    """
+    Step 2 — Verify the 6-digit OTP.
+    Returns a short-lived reset_token (valid 10 min) to authorise the password change.
+    """
+    email = body.email.strip().lower()
+    user  = await db.users.find_one({"email": email})
+
+    if not user or not user.get("passwordResetOtpHash"):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset code")
+
+    # Lockout after 5 wrong attempts
+    if user.get("passwordResetAttempts", 0) >= 5:
+        raise HTTPException(status_code=429, detail="Too many attempts. Please request a new code.")
+
+    # Check expiry
+    expires_at = user.get("passwordResetExpiresAt")
+    if expires_at:
+        exp = datetime.fromisoformat(expires_at)
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > exp:
+            raise HTTPException(status_code=400, detail="Reset code has expired. Please request a new one.")
+
+    # Verify OTP
+    submitted_hash = hashlib.sha256(body.otp.strip().encode()).hexdigest()
+    if submitted_hash != user["passwordResetOtpHash"]:
+        await db.users.update_one(
+            {"_id": user["_id"]},
+            {"$inc": {"passwordResetAttempts": 1}},
+        )
+        raise HTTPException(status_code=400, detail="Incorrect reset code")
+
+    # OTP verified — issue a one-time reset token (10 min)
+    reset_token        = secrets.token_urlsafe(32)
+    reset_token_hash   = hashlib.sha256(reset_token.encode()).hexdigest()
+    reset_token_expiry = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
+
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {
+            "passwordResetTokenHash":   reset_token_hash,
+            "passwordResetTokenExpiry": reset_token_expiry,
+            "passwordResetAttempts":    0,
+        },
+         "$unset": {
+            "passwordResetOtpHash":   "",
+            "passwordResetExpiresAt": "",
+        }},
+    )
+
+    return {"message": "Code verified", "reset_token": reset_token}
+
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+async def reset_password(request: Request, body: ResetPasswordRequest):
+    """
+    Step 3 — Set the new password using the reset_token from Step 2.
+    Invalidates all existing refresh tokens (forces re-login everywhere).
+    """
+    email = body.email.strip().lower()
+    user  = await db.users.find_one({"email": email})
+
+    if not user or not user.get("passwordResetTokenHash"):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset session. Please start again.")
+
+    # Check reset token expiry
+    expiry = user.get("passwordResetTokenExpiry")
+    if expiry:
+        exp = datetime.fromisoformat(expiry)
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > exp:
+            raise HTTPException(status_code=400, detail="Reset session expired. Please start again.")
+
+    # Verify reset token
+    submitted_hash = hashlib.sha256(body.reset_token.encode()).hexdigest()
+    if submitted_hash != user["passwordResetTokenHash"]:
+        raise HTTPException(status_code=400, detail="Invalid reset session")
+
+    # Validate new password strength
+    validate_password_strength(body.new_password)
+
+    # Update password + wipe all reset fields + invalidate all refresh tokens
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {
+                "password":  hash_password(body.new_password),
+                "updatedAt": utcnow(),
+                "refreshTokens": [],             # force re-login on all devices
+            },
+            "$unset": {
+                "passwordResetTokenHash":   "",
+                "passwordResetTokenExpiry": "",
+                "passwordResetAttempts":    "",
+                "passwordResetOtpHash":     "",
+                "passwordResetExpiresAt":   "",
+            },
+        },
+    )
+
+    logger.info("Password successfully reset for %s", email)
+    return {"message": "Password reset successfully. Please sign in with your new password."}

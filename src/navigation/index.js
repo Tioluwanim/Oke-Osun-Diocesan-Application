@@ -9,6 +9,7 @@ import AuthSplashScreen from '../screens/auth/SplashScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import PendingApprovalScreen from '../screens/auth/PendingApprovalScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 
 import MemberTabs from './MemberTabs';
 import ClergyTabs from './ClergyTabs';
@@ -32,6 +33,7 @@ const AuthStack = () => (
     <Stack.Screen name="Login" component={LoginScreen} options={{ animation: 'slide_from_right' }} />
     <Stack.Screen name="Register" component={RegisterScreen} options={{ animation: 'slide_from_right' }} />
     <Stack.Screen name="PendingApproval" component={PendingApprovalScreen} options={{ animation: 'slide_from_right' }} />
+    <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ animation: 'slide_from_bottom' }} />
   </Stack.Navigator>
 );
 

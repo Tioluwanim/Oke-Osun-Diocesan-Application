@@ -46,10 +46,23 @@ const NOTIF_OPTIONS = [
   { key: 'broadcasts', icon: '📢', label: 'Diocese Broadcasts', desc: 'Diocese-wide messages and updates' },
 ];
 
-const STATS = [
-  { label: 'Events\nAttended', value: '8', icon: '📅' },
-  { label: 'Sermons\nListened', value: '24', icon: '🎙️' },
-  { label: 'Days\nActive', value: '32', icon: '🔥' },
+// Stats computed from real user data — no hardcoded values
+const getStats = (user) => [
+  {
+    label: 'Member Since',
+    value: user?.createdAt ? new Date(user.createdAt).getFullYear().toString() : '—',
+    icon: '📅',
+  },
+  {
+    label: 'Role',
+    value: user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '—',
+    icon: '🎖️',
+  },
+  {
+    label: 'Parish',
+    value: user?.parish ? user.parish.split(' ')[0] : 'None',
+    icon: '⛪',
+  },
 ];
 
 const FAQ_ITEMS = [
@@ -316,7 +329,7 @@ export default function ProfileScreen() {
 
         {/* ── Stats Row ── */}
         <View style={styles.statsRow}>
-          {STATS.map((stat, index) => (
+          {getStats(user).map((stat, index) => (
             <View key={index} style={[styles.statCard, index < STATS.length - 1 && styles.statCardBorder]}>
               <Text style={styles.statIcon}>{stat.icon}</Text>
               <Text style={styles.statValue}>{stat.value}</Text>

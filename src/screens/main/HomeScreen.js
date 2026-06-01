@@ -33,6 +33,26 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const pulse = useRef(new Animated.Value(0)).current;
 
+  // Staggered entry — each section fades + slides in 80ms apart
+  const staggerAnims = useRef([0,1,2,3,4].map(() => ({
+    opacity:    new Animated.Value(0),
+    translateY: new Animated.Value(18),
+  }))).current;
+
+  useEffect(() => {
+    Animated.stagger(80, staggerAnims.map(a =>
+      Animated.parallel([
+        Animated.timing(a.opacity,    { toValue: 1, duration: 420, useNativeDriver: true }),
+        Animated.timing(a.translateY, { toValue: 0, duration: 420, useNativeDriver: true }),
+      ])
+    )).start();
+  }, []);
+
+  const stagger = (idx) => ({
+    opacity:   staggerAnims[idx].opacity,
+    transform: [{ translateY: staggerAnims[idx].translateY }],
+  });
+
   const { data: liveStream,  isLoading: ll } = useQuery({ queryKey: queryKeys.live,     queryFn: queryFns.live });
   const { data: events = [], isLoading: el } = useQuery({ queryKey: queryKeys.events,   queryFn: queryFns.events });
   const { data: sermons = [], isLoading: sl } = useQuery({ queryKey: queryKeys.sermons,  queryFn: queryFns.sermons });
@@ -123,7 +143,7 @@ export default function HomeScreen({ navigation }) {
         )}
 
         {/* Stats */}
-        <View style={styles.statsRow}>
+        <Animated.View style={[styles.statsRow, stagger(0)]}>
           {stats.map(s => (
             <View key={s.label} style={[styles.statCard, { flexBasis: cardBasis, maxWidth: cardBasis }]}>
               <AppIcon name={s.icon} size={20} color={COLORS.gold} style={styles.statIcon} />
@@ -134,6 +154,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         {/* Next Event */}
+        <Animated.View style={stagger(1)}>
         <SectionHeader title="Next Event" onSeeAll={() => nav('Events')} />
         {isLoading ? <SkeletonCard /> : nextEvent
           ? <FeatureCard
@@ -146,6 +167,9 @@ export default function HomeScreen({ navigation }) {
           : <EmptyState icon="calendar" title="No upcoming events" description="New diocesan events will appear here." />
         }
 
+        </Animated.View>
+
+        <Animated.View style={stagger(2)}>
         {/* Latest Sermon */}
         <SectionHeader title="Latest Sermon" onSeeAll={() => nav('Resources')} />
         {isLoading ? <SkeletonCard /> : latestSermon
@@ -160,7 +184,8 @@ export default function HomeScreen({ navigation }) {
           : <EmptyState icon="audio" title="No sermons yet" description="Uploaded sermons will appear here." />
         }
 
-        {/* Quick Actions */}
+        </Animated.View>
+        <Animated.View style={stagger(3)}>
         <SectionHeader title="Quick Access" />
         <View style={styles.quickGrid}>
           {QUICK_ACTIONS.map(a => (
@@ -171,7 +196,8 @@ export default function HomeScreen({ navigation }) {
           ))}
         </View>
 
-        {/* Recent Updates */}
+        </Animated.View>
+        <Animated.View style={stagger(4)}>
         <SectionHeader title="Recent Updates" />
         {isLoading ? <SkeletonCard /> : updates.length
           ? updates.map(u => (
@@ -189,6 +215,8 @@ export default function HomeScreen({ navigation }) {
             ))
           : <EmptyState icon="notification" title="No updates yet" description="Events and sermons will appear here." />
         }
+
+        </Animated.View>
 
         <View style={{ height: 110 }} />
       </ScrollView>

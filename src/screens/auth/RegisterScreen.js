@@ -15,6 +15,7 @@ import { ROLES } from '../../constants/config';
 import { useAuth } from '../../context/AuthContext';
 import LoadingButton from '../../components/ui/LoadingButton';
 import AppIcon from '../../components/ui/AppIcon';
+import PasswordStrengthBar from '../../components/forms/PasswordStrengthBar';
 
 export default function RegisterScreen({ navigation }) {
   const [mode, setMode] = useState('register');
@@ -295,6 +296,7 @@ export default function RegisterScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           </View>
+          <PasswordStrengthBar password={password} />
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Confirm Password *</Text>

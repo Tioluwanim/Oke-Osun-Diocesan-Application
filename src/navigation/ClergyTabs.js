@@ -19,8 +19,8 @@ import LiveScreen from '../screens/main/LiveScreen';
 import ResourcesScreen from '../screens/main/SermonsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import ParishScreen from '../screens/clergy/ParishScreen';
-import GiveScreen from '../screens/main/GiveScreen';
-import GiveScreen from '../screens/main/GiveScreen';
+import GiveScreen from '../screens/main/GivesScreen';
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();

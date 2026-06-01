@@ -77,9 +77,9 @@ export default function ClergyHomeScreen({ navigation }) {
   const memberCount = members.filter((item) => item.role === 'member').length;
 
   const stats = [
-    { label: 'Members', value: String(memberCount), icon: '🙏', color: COLORS.teal },
-    { label: 'Clergy', value: String(clergyCount), icon: '✝', color: COLORS.gold },
-    { label: 'Events', value: String(parishEvents.length), icon: '📅', color: COLORS.blue },
+    { label: 'Members', value: String(memberCount), icon: 'people-outline', color: COLORS.teal },
+    { label: 'Clergy', value: String(clergyCount), icon: 'church', color: COLORS.gold },
+    { label: 'Events', value: String(parishEvents.length), icon: 'calendar', color: COLORS.blue },
     { label: 'Notices', value: String(notices.length), icon: '📢', color: COLORS.red },
   ];
 

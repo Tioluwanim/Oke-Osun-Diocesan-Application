@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import PressableCard from '../ui/PressableCard';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 
 /**
@@ -7,7 +8,7 @@ import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
  */
 export default function FeatureCard({ tag, tagColor = COLORS.gold, title, meta, description, onPress }) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+    <PressableCard style={styles.card} onPress={onPress}>
       <View style={[styles.accent, { backgroundColor: tagColor }]} />
       <View style={styles.body}>
         <Text style={[styles.tag, { color: tagColor }]}>{tag}</Text>
@@ -15,7 +16,7 @@ export default function FeatureCard({ tag, tagColor = COLORS.gold, title, meta, 
         <Text style={styles.meta} numberOfLines={1}>{meta}</Text>
         {!!description && <Text style={styles.desc} numberOfLines={1}>{description}</Text>}
       </View>
-    </TouchableOpacity>
+    </PressableCard>
   );
 }
 

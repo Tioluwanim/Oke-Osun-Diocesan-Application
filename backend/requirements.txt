@@ -1,14 +1,36 @@
-fastapi
-uvicorn
-motor
-pymongo
-python-jose[cryptography]
-passlib[bcrypt]
-pydantic[email]
-python-dotenv
+# Core
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+uvloop>=0.19.0
+httptools>=0.6.0
+gunicorn>=22.0.0
+
+# Database
+motor>=3.5.0
+pymongo>=4.8.0
+
+# Auth / Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
 bcrypt==4.0.1
-google-cloud-storage
-pytest
-httpx
-python-multipart
-slowapi
+
+# Validation
+pydantic[email]>=2.7.0
+python-multipart>=0.0.9
+
+# Config
+python-dotenv>=1.0.0
+
+# Rate limiting
+slowapi>=0.1.9
+
+# HTTP client (payments)
+httpx>=0.27.0
+
+# Google Cloud Storage
+google-cloud-storage>=2.16.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+httpx>=0.27.0

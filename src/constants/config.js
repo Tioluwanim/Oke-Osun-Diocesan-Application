@@ -54,6 +54,10 @@ export const API_ROUTES = {
   paymentsMyHistory: `${API_BASE_URL}/payments/my`,
   paymentsAdminAll:  `${API_BASE_URL}/payments/admin/all`,
   paymentsWebhook:   `${API_BASE_URL}/payments/webhook`,
+  // ── Forgot Password ──
+  forgotPassword:    `${API_BASE_URL}/auth/forgot-password`,
+  verifyResetOtp:    `${API_BASE_URL}/auth/verify-reset-otp`,
+  resetPassword:     `${API_BASE_URL}/auth/reset-password`,
 };
 
 export const ROLES = {

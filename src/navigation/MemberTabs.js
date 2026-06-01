@@ -16,7 +16,7 @@ import EventsScreen from '../screens/main/EventsScreen';
 import LiveScreen from '../screens/main/LiveScreen';
 import ResourcesScreen from '../screens/main/SermonsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
-import GiveScreen from '../screens/main/GiveScreen';
+import GiveScreen from '../screens/main/GivesScreen';
 
 const Tab = createBottomTabNavigator();
 

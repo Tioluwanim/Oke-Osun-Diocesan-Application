@@ -19,6 +19,7 @@ import SkeletonList from '../../components/ui/SkeletonList';
 import EmptyState from '../../components/ui/EmptyState';
 import AppIcon from '../../components/ui/AppIcon';
 import { queryFns, queryKeys } from '../../lib/api';
+import PressableCard from '../../components/ui/PressableCard';
 
 const { width } = Dimensions.get('window');
 
@@ -182,10 +183,9 @@ export default function EventsScreen() {
         renderItem={({ item: event, index }) => {
           const config = typeConfig(event.category);
           return (
-            <TouchableOpacity
+            <PressableCard
               style={styles.eventCard}
               onPress={() => setSelectedEvent(event)}
-              activeOpacity={0.85}
             >
               <View style={[styles.eventTopBar, { backgroundColor: config.color }]} />
               <View style={styles.eventCardInner}>
@@ -227,7 +227,7 @@ export default function EventsScreen() {
                   </View>
                 </View>
               </View>
-            </TouchableOpacity>
+            </PressableCard>
           );
         }}
         ListEmptyComponent={!isLoading && !error ? (

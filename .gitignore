@@ -9,6 +9,7 @@ node_modules/
 # EXPO
 # =========================
 .expo/
+.expo-test/
 dist/
 web-build/
 expo-env.d.ts
@@ -78,6 +79,7 @@ __pycache__/
 .pytest_cache/
 .cache/
 pytest_cache/
+pytest-cache-files-*/
 .cache-pytest/
 .tox/
 .coverage

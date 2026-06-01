@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -25,6 +25,7 @@ import SkeletonList from '../../components/ui/SkeletonList';
 import AppIcon from '../../components/ui/AppIcon';
 import BrandedEmptyState from '../../components/ui/EmptyState';
 import { queryFns, queryKeys } from '../../lib/api';
+import PressableCard from '../../components/ui/PressableCard';
 
 const { width } = Dimensions.get('window');
 
@@ -81,15 +82,7 @@ export default function ResourcesScreen() {
   const soundRef = useRef(null);
   const queryClient = useQueryClient();
 
-  // ── Per-tab data + loading ──
-  const [magazines,    setMagazines]    = useState([]);
-  const [bibleStudies, setBibleStudies] = useState([]);
-  const [documents,    setDocuments]    = useState([]);
-
-  const [loadingMags,    setLoadingMags]    = useState(false);
-  const [loadingBible,   setLoadingBible]   = useState(false);
-  const [loadingDocs,    setLoadingDocs]    = useState(false);
-  const [refreshing,     setRefreshing]     = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // ── Bible Study Reader State ──
   const [selectedStudy,   setSelectedStudy]   = useState(null);
@@ -98,58 +91,26 @@ export default function ResourcesScreen() {
   const [lessonModal,     setLessonModal]      = useState(false);
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
 
-  const { data: sermons = [], isLoading: loadingSermons } = useQuery({
-    queryKey: queryKeys.sermons,
-    queryFn: queryFns.sermons,
-  });
+  const { data: sermons = [],      isLoading: loadingSermons } = useQuery({ queryKey: queryKeys.sermons,      queryFn: queryFns.sermons,      staleTime: 60_000 });
+  const { data: magazines = [],    isLoading: loadingMags }    = useQuery({ queryKey: queryKeys.magazines,    queryFn: queryFns.magazines,    staleTime: 120_000 });
+  const { data: bibleStudies = [], isLoading: loadingBible }   = useQuery({ queryKey: queryKeys.bibleStudies, queryFn: queryFns.bibleStudies, staleTime: 120_000 });
+  const { data: documents = [],    isLoading: loadingDocs }    = useQuery({ queryKey: queryKeys.documents,    queryFn: queryFns.documents,    staleTime: 120_000 });
 
-  // ── Fetch magazines ──
-  const fetchMagazines = useCallback(async () => {
-    setLoadingMags(true);
-    try {
-      const response = await fetch(`${API_ROUTES.magazines}?limit=100`);
-      const data = await response.json();
-      if (response.ok) setMagazines(data.magazines || []);
-    } catch {}
-    finally { setLoadingMags(false); }
-  }, []);
 
-  // ── Fetch bible studies ──
-  const fetchBibleStudies = useCallback(async () => {
-    setLoadingBible(true);
-    try {
-      const response = await fetch(`${API_ROUTES.bibleStudies}?limit=100`);
-      const data = await response.json();
-      if (response.ok) setBibleStudies(data.bible_studies || []);
-    } catch {}
-    finally { setLoadingBible(false); }
-  }, []);
 
-  // ── Fetch documents ──
-  const fetchDocuments = useCallback(async () => {
-    setLoadingDocs(true);
-    try {
-      const response = await fetch(`${API_ROUTES.documents}?limit=100`);
-      const data = await response.json();
-      if (response.ok) setDocuments(data.documents || []);
-    } catch {}
-    finally { setLoadingDocs(false); }
-  }, []);
 
-  useEffect(() => {
-    if (activeTab === 'magazines'  && magazines.length    === 0) fetchMagazines();
-    if (activeTab === 'bible'      && bibleStudies.length === 0) fetchBibleStudies();
-    if (activeTab === 'documents'  && documents.length    === 0) fetchDocuments();
-  }, [activeTab]);
 
+  const TAB_KEY_MAP = {
+    sermons:   queryKeys.sermons,
+    magazines: queryKeys.magazines,
+    bible:     queryKeys.bibleStudies,
+    documents: queryKeys.documents,
+  };
   const onRefresh = () => {
-    if (activeTab === 'sermons') {
-      setRefreshing(true);
-      queryClient.invalidateQueries({ queryKey: queryKeys.sermons }).finally(() => setRefreshing(false));
-    }
-    if (activeTab === 'magazines') { setRefreshing(true); fetchMagazines().finally(() => setRefreshing(false)); }
-    if (activeTab === 'bible')     { setRefreshing(true); fetchBibleStudies().finally(() => setRefreshing(false)); }
-    if (activeTab === 'documents') { setRefreshing(true); fetchDocuments().finally(() => setRefreshing(false)); }
+    const key = TAB_KEY_MAP[activeTab];
+    if (!key) return;
+    setRefreshing(true);
+    queryClient.invalidateQueries({ queryKey: key }).finally(() => setRefreshing(false));
   };
 
   // ── Derived series ──
@@ -361,11 +322,10 @@ export default function ResourcesScreen() {
                   const config    = typeConfig(sermon.type);
                   const isPlaying = playingId === sermon.id;
                   return (
-                    <TouchableOpacity
+                    <PressableCard
                       key={sermon.id}
                       style={[styles.sermonCard, isPlaying && styles.sermonCardActive]}
                       onPress={() => setSelectedSermon(sermon)}
-                      activeOpacity={0.85}
                     >
                       <View style={[styles.cardTopBar, { backgroundColor: config.color }]} />
                       <View style={styles.sermonCardInner}>
@@ -407,7 +367,7 @@ export default function ResourcesScreen() {
                           </View>
                         )}
                       </View>
-                    </TouchableOpacity>
+                    </PressableCard>
                   );
                 })
               )}

@@ -48,6 +48,10 @@ async def create_indexes():
         await db.payments.create_index("paidAt")
         await db.payments.create_index("parish")
 
+        # Password reset OTP
+        await db.users.create_index("passwordResetExpiresAt", sparse=True)
+        await db.users.create_index("passwordResetTokenExpiry", sparse=True)
+
         print("✅ MongoDB indexes created")
 
     except Exception as e:

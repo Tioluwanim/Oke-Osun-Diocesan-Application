@@ -1,32 +1,35 @@
 {
-  "cli": {
-    "version": ">= 16.0.0"
-  },
+  "cli": { "version": ">= 10.0.0" },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "development",
-        "EXPO_PUBLIC_API_BASE_URL": "http://10.0.2.2:8000"
+        "EXPO_PUBLIC_APP_ENV": "development"
       }
     },
     "preview": {
       "distribution": "internal",
+      "android": { "buildType": "apk" },
       "env": {
         "EXPO_PUBLIC_APP_ENV": "staging",
-        "EXPO_PUBLIC_API_BASE_URL": "https://staging-api.okeosundiocese.ng"
+        "EXPO_PUBLIC_API_BASE_URL": "https://staging-api.okeosundiocese.org.ng"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_APP_ENV": "production",
-        "EXPO_PUBLIC_API_BASE_URL": "https://api.okeosundiocese.ng"
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.okeosundiocese.org.ng"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "production"
+      }
+    }
   }
 }

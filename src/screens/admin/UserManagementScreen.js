@@ -463,7 +463,7 @@ export default function UserManagementScreen({ navigation }) {
       >
         {filteredUsers.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>👤</Text>
+            <AppIcon name="person" size={48} color={COLORS.textMuted} />
             <Text style={styles.emptyTitle}>No Users Found</Text>
             <Text style={styles.emptySubText}>
               {searchQuery ? 'Try a different search' : 'No users match this filter'}
@@ -861,6 +861,8 @@ const styles = StyleSheet.create({
 
   // ── Empty ──
   emptyState: { alignItems: 'center', paddingTop: 60, gap: SPACING.sm },
+  emptyResetBtn: { marginTop: SPACING.sm, backgroundColor: COLORS.gold, borderRadius: RADIUS.full, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm },
+  emptyResetText: { color: COLORS.background, fontWeight: FONTS.weights.bold, fontSize: FONTS.sizes.sm },
   emptyIcon: { fontSize: 56 },
   emptyTitle: { fontSize: FONTS.sizes.xl, fontWeight: FONTS.weights.black, color: COLORS.text },
   emptySubText: { fontSize: FONTS.sizes.sm, color: COLORS.textMuted },

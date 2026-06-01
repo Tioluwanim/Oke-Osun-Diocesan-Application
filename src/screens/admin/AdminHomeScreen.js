@@ -71,10 +71,10 @@ export default function AdminHomeScreen({ navigation }) {
     const clergyCount = users.filter((item) => item.role === 'clergy').length;
     const memberCount = users.filter((item) => item.role === 'member').length;
     return [
-      { label: 'Parishes', value: String(parishes.length), color: COLORS.gold, icon: '⛪' },
-      { label: 'Clergy', value: String(clergyCount), color: COLORS.teal, icon: '✝' },
-      { label: 'Members', value: String(memberCount), color: COLORS.blue, icon: '🙏' },
-      { label: 'Events', value: String(events.length), color: COLORS.red, icon: '📅' },
+      { label: 'Parishes', value: String(parishes.length), color: COLORS.gold, icon: 'church' },
+      { label: 'Clergy', value: String(clergyCount), color: COLORS.teal, icon: 'church' },
+      { label: 'Members', value: String(memberCount), color: COLORS.blue, icon: 'people-outline' },
+      { label: 'Events', value: String(events.length), color: COLORS.red, icon: 'calendar' },
     ];
   }, [parishes.length, users, events.length]);
 
