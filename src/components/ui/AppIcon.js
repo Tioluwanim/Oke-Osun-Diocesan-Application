@@ -29,6 +29,7 @@ const ICONS = {
   notification: 'notifications-outline',
   pause: 'pause',
   person: 'person-outline',
+  people: 'people-outline',
   phone: 'call-outline',
   play: 'play',
   privacy: 'shield-checkmark-outline',

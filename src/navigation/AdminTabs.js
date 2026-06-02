@@ -53,7 +53,7 @@ const TABS = [
   { name: 'Live', icon: 'live', label: 'Live', component: LiveScreen, color: COLORS.red },
   { name: 'Resources', icon: 'resources', label: 'Sermons', component: ResourcesScreen, color: COLORS.gold },
   { name: 'Manage', icon: 'privacy', label: 'Manage', component: ManageScreen, color: COLORS.red },
-  { name: 'UserManagement', icon: 'people-outline', label: 'Users', component: UserManagementScreen, color: COLORS.red },
+  { name: 'UserManagement', icon: 'people', label: 'Users', component: UserManagementScreen, color: COLORS.red },
   { name: 'Payments', icon: 'payment', label: 'Offerings', component: PaymentDashboardScreen, color: COLORS.gold },
   { name: 'Profile', icon: 'person', label: 'Profile', component: ProfileScreen, color: COLORS.gold },
 ];
