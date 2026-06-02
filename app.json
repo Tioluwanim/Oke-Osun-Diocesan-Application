@@ -1,32 +1,79 @@
 {
   "expo": {
-    "name": "oke_osun_diocese",
-    "slug": "oke_osun_diocese",
+    "name": "Oke-Osun Diocese",
+    "slug": "oke-osun-diocese",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0C10",
+    "primaryColor": "#C9A84C",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0A0C10"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "ng.anglican.okeosun.diocese",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to upload sermon and event photos.",
+        "NSPhotoLibraryUsageDescription": "Used to select photos for your profile and uploads.",
+        "NSMicrophoneUsageDescription": "Used to record audio for sermons.",
+        "UIBackgroundModes": ["audio", "fetch"]
+      }
     },
     "android": {
+      "package": "ng.anglican.okeosun.diocese",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "backgroundColor": "#0A0C10"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": false,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24
+          },
+          "ios": {}
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow Oke-Osun Diocese to access your microphone for sermon recording."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Oke-Osun Diocese to access your photos for profile and uploads.",
+          "cameraPermission": "Allow Oke-Osun Diocese to access your camera."
+        }
+      ]
     ]
   }
 }
