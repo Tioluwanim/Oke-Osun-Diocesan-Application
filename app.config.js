@@ -6,6 +6,7 @@ const ANDROID_PACKAGE = process.env.ANDROID_PACKAGE || 'ng.okeosun.diocese';
 
 export default {
   expo: {
+    owner: 'tioluwanimi',
     name: APP_NAME,
     slug: APP_SLUG,
     version: '1.0.0',
@@ -36,6 +37,9 @@ export default {
     plugins: ['expo-secure-store'],
     extra: {
       appEnv: APP_ENV,
+      eas: {
+        projectId: '0414bab3-4fd3-4eb8-9e23-f7ba52b8c0d3',
+      },
     },
   },
 };
