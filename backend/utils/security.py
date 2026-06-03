@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 
 load_dotenv()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 JWT_ALGORITHM = "HS256"
 TOKEN_TYPE_ACCESS = "access"
@@ -35,8 +35,25 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
+def _is_bcrypt_hash(hashed: str) -> bool:
+    return hashed.startswith("$2")
+
+
+def _truncate_bcrypt_password(password: str) -> str:
+    encoded = password.encode("utf-8")
+    if len(encoded) <= 72:
+        return password
+    return encoded[:72].decode("utf-8", errors="ignore")
+
+
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return pwd_context.verify(plain, hashed)
+    except ValueError:
+        if _is_bcrypt_hash(hashed):
+            truncated = _truncate_bcrypt_password(plain)
+            return pwd_context.verify(truncated, hashed)
+        raise
 
 
 def hash_token(token: str) -> str:

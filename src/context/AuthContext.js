@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { STORAGE_KEYS, API_ROUTES } from '../constants/config';
 import { authApi, userApi, registerAuthHandlers } from '../lib/api';
+import { translateAuthError } from '../utils/errorTranslator';
 
 const AuthContext = createContext(null);
 
@@ -131,7 +132,7 @@ export const AuthProvider = ({ children }) => {
       };
     } catch (error) {
       console.warn('Register error:', error);
-      return { success: false, message: error.message || 'Registration failed' };
+      return { success: false, message: translateAuthError(error.message || 'Registration failed') };
     }
   };
 
@@ -146,7 +147,7 @@ export const AuthProvider = ({ children }) => {
       };
     } catch (error) {
       console.warn('Complete invite error:', error);
-      return { success: false, message: error.message || 'Failed to complete invite' };
+      return { success: false, message: translateAuthError(error.message || 'Failed to complete invite') };
     }
   };
 
@@ -162,7 +163,7 @@ export const AuthProvider = ({ children }) => {
       };
     } catch (error) {
       console.warn('Login error:', error);
-      return { success: false, message: error.message || 'Login failed' };
+      return { success: false, message: translateAuthError(error.message || 'Login failed') };
     }
   };
 
@@ -178,7 +179,7 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: 'Failed to update profile' };
     } catch (error) {
       console.warn('Error updating user:', error);
-      return { success: false, message: error.message || 'Network error. Check your connection.' };
+      return { success: false, message: translateAuthError(error.message || 'Network error. Check your connection.') };
     }
   };
 
@@ -189,7 +190,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.warn('Error changing password:', error);
-      return { success: false, message: error.message || 'Network error. Check your connection.' };
+      return { success: false, message: translateAuthError(error.message || 'Network error. Check your connection.') };
     }
   };
 

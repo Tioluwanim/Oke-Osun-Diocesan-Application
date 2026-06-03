@@ -32,12 +32,27 @@ async function requestJson(url, options = {}) {
   try {
     return await fetch(targetUrl, { ...fetchOptions, signal: controller.signal });
   } catch (error) {
-    if (error.name === 'AbortError') {
+    if (error?.name === 'AbortError') {
       throw new Error('Request timed out. Please try again.');
     }
-    throw new Error('Network request failed. Check your connection.');
+    const message = typeof error?.message === 'string' && error.message.length > 0
+      ? error.message
+      : 'Network request failed. Check your connection.';
+    throw new Error(message);
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+async function parseResponseData(response) {
+  const text = await response.text().catch(() => '');
+  if (!text) {
+    return {};
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { __text: text };
   }
 }
 
@@ -54,12 +69,12 @@ async function refreshSession() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
-      const data = await response.json().catch(() => ({}));
+      const data = await parseResponseData(response);
       if (!response.ok) {
         if (authHandlers.onLogout) {
           await authHandlers.onLogout();
         }
-        throw new Error(data?.detail || 'Unauthorized');
+        throw new Error(data?.detail || data?.error || 'Unauthorized');
       }
       if (authHandlers.updateTokens) {
         await authHandlers.updateTokens(data.accessToken || data.token, data.refreshToken);
@@ -75,7 +90,7 @@ async function refreshSession() {
 
 export async function fetchJson(url, options) {
   const response = await requestJson(url, options);
-  const data = await response.json().catch(() => ({}));
+  const data = await parseResponseData(response);
 
   if (response.ok) {
     return data;
@@ -94,7 +109,8 @@ export async function fetchJson(url, options) {
     }
   }
 
-  throw new Error(data?.detail || response.statusText || 'Request failed');
+  const errorMessage = data?.detail || data?.error || data?.message || data?.__text?.trim() || response.statusText || `Request failed with status ${response.status}`;
+  throw new Error(errorMessage);
 }
 
 export const authHeaders = (token) => ({
