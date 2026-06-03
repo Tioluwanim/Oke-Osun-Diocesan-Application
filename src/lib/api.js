@@ -1,4 +1,4 @@
-import { API_ROUTES } from '../constants/config';
+import { API_BASE_URL, API_ROUTES } from '../constants/config';
 
 let authHandlers = {
   getAccessToken: null,
@@ -21,10 +21,16 @@ const DEFAULT_TIMEOUT_MS = 60000; // 60s — handles Render.com cold start (up t
 
 async function requestJson(url, options = {}) {
   const { auth, retry, timeoutMs, ...fetchOptions } = options;
+  const targetUrl = typeof url === 'string' ? url : url?.toString?.();
+  if (!targetUrl || !targetUrl.startsWith(API_BASE_URL)) {
+    console.warn('[api] blocked request to non-production URL:', targetUrl);
+    throw new Error('Only production backend requests are allowed.');
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs || DEFAULT_TIMEOUT_MS);
   try {
-    return await fetch(url, { ...fetchOptions, signal: controller.signal });
+    return await fetch(targetUrl, { ...fetchOptions, signal: controller.signal });
   } catch (error) {
     if (error.name === 'AbortError') {
       throw new Error('Request timed out. Please try again.');

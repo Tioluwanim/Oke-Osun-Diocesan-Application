@@ -1,6 +1,11 @@
 import { API_BASE_URL } from '../constants/config';
 
 export const uploadFileToGCS = async (file, token, folder = 'uploads') => {
+  const uploadUrl = `${API_BASE_URL}/uploads`;
+  if (!uploadUrl.startsWith(API_BASE_URL)) {
+    throw new Error('Only production backend requests are allowed.');
+  }
+
   const formData = new FormData();
   formData.append('file', {
     uri: file.uri,
@@ -10,7 +15,7 @@ export const uploadFileToGCS = async (file, token, folder = 'uploads') => {
   formData.append('folder', folder);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/uploads`, {
+    const response = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
