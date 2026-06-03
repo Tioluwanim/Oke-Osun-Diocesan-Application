@@ -6,10 +6,11 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+import bcrypt
 
 load_dotenv()
 
-pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 JWT_ALGORITHM = "HS256"
 TOKEN_TYPE_ACCESS = "access"
@@ -39,21 +40,26 @@ def _is_bcrypt_hash(hashed: str) -> bool:
     return hashed.startswith("$2")
 
 
-def _truncate_bcrypt_password(password: str) -> str:
+def _truncate_bcrypt_password(password: str) -> bytes:
     encoded = password.encode("utf-8")
-    if len(encoded) <= 72:
-        return password
-    return encoded[:72].decode("utf-8", errors="ignore")
+    return encoded if len(encoded) <= 72 else encoded[:72]
+
+
+def _verify_bcrypt_hash(plain: str, hashed: str) -> bool:
+    try:
+        return bcrypt.checkpw(_truncate_bcrypt_password(plain), hashed.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 
 def verify_password(plain: str, hashed: str) -> bool:
+    if _is_bcrypt_hash(hashed):
+        return _verify_bcrypt_hash(plain, hashed)
+
     try:
         return pwd_context.verify(plain, hashed)
-    except ValueError:
-        if _is_bcrypt_hash(hashed):
-            truncated = _truncate_bcrypt_password(plain)
-            return pwd_context.verify(truncated, hashed)
-        raise
+    except Exception:
+        return False
 
 
 def hash_token(token: str) -> str:
