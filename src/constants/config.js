@@ -1,13 +1,5 @@
-import { Platform } from 'react-native';
-
-const PROD_API_BASE_URL = 'https://oke-osun-diocesan-application.onrender.com';
-const LOCAL_API_BASE_URL =
-  Platform.OS === 'android'
-    ? 'http://10.0.2.2:8000'
-    : 'http://localhost:8000';
-
-export const APP_ENV = __DEV__ ? 'development' : 'production';
-export const API_BASE_URL = __DEV__ ? LOCAL_API_BASE_URL : PROD_API_BASE_URL;
+export const APP_ENV = 'production';
+export const API_BASE_URL = 'https://oke-osun-diocesan-application.onrender.com';
 
 export const API_ROUTES = {
   register: `${API_BASE_URL}/auth/register`,

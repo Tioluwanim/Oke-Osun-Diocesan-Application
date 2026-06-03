@@ -66,28 +66,17 @@ export default {
         'android.permission.INTERNET',
         'android.permission.ACCESS_NETWORK_STATE',
       ],
-    },
-
-    web: {
-      favicon: './assets/favicon.png',
+      useNextNotificationsApi: true,
+      // Allow local HTTP backend traffic during development on Android emulators/devices.
+      // If you run on a physical device, replace the local API host with your machine's LAN IP.
+      usesCleartextTraffic: true,
     },
 
     plugins: [
+      'expo-build-properties',
       'expo-font',
       'expo-secure-store',
       'expo-notifications',
-      [
-        'expo-build-properties',
-        {
-          android: {
-            usesCleartextTraffic: false,
-            compileSdkVersion: 35,
-            targetSdkVersion: 35,
-            minSdkVersion: 24,
-          },
-          ios: {},
-        },
-      ],
       [
         'expo-av',
         {
@@ -104,6 +93,7 @@ export default {
             'Allow Oke-Osun Diocese to access your camera.',
         },
       ],
+      '@logrocket/react-native',
     ],
 
     extra: {

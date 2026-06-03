@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import NetInfo from '@react-native-community/netinfo';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import LogRocket from '@logrocket/react-native';
 import { AuthProvider } from './src/context/AuthContext';
 import Navigation from './src/navigation';
 import ErrorBoundary from './src/components/ui/ErrorBoundary';
@@ -28,6 +29,10 @@ export default function App() {
       },
     },
   }), []);
+
+  useEffect(() => {
+    LogRocket.init('vg01zw/oke-osun-diocese');
+  }, []);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
