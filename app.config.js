@@ -33,9 +33,12 @@ export default {
       supportsTablet: true,
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
-        NSCameraUsageDescription: 'Used to upload sermon and event photos.',
-        NSPhotoLibraryUsageDescription: 'Used to select photos for your profile and uploads.',
-        NSMicrophoneUsageDescription: 'Used to record audio for sermons.',
+        NSCameraUsageDescription:
+          'Used to upload sermon and event photos.',
+        NSPhotoLibraryUsageDescription:
+          'Used to select photos for your profile and uploads.',
+        NSMicrophoneUsageDescription:
+          'Used to record audio for sermons.',
         UIBackgroundModes: ['audio', 'fetch'],
       },
     },
@@ -70,6 +73,7 @@ export default {
     },
 
     plugins: [
+      'expo-font',
       'expo-secure-store',
       'expo-notifications',
       [
@@ -96,7 +100,8 @@ export default {
         {
           photosPermission:
             'Allow Oke-Osun Diocese to access your photos for profile and uploads.',
-          cameraPermission: 'Allow Oke-Osun Diocese to access your camera.',
+          cameraPermission:
+            'Allow Oke-Osun Diocese to access your camera.',
         },
       ],
     ],
