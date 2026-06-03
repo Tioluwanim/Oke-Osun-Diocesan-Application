@@ -20,29 +20,49 @@ export default {
 
     icon: './assets/icon.png',
 
-    userInterfaceStyle: 'light',
+    userInterfaceStyle: 'dark',
 
     splash: {
       image: './assets/splash-icon.png',
       resizeMode: 'contain',
-      backgroundColor: '#ffffff',
+      backgroundColor: '#0A0C10',
     },
 
-    {
-      "ios": {
-        "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-        }
-      }
+    ios: {
+      bundleIdentifier: IOS_BUNDLE_ID,
+      supportsTablet: true,
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+        NSCameraUsageDescription: 'Used to upload sermon and event photos.',
+        NSPhotoLibraryUsageDescription: 'Used to select photos for your profile and uploads.',
+        NSMicrophoneUsageDescription: 'Used to record audio for sermons.',
+        UIBackgroundModes: ['audio', 'fetch'],
+      },
     },
+
     android: {
       package: ANDROID_PACKAGE,
+      versionCode: 1,
       adaptiveIcon: {
-        backgroundColor: '#E6F4FE',
         foregroundImage: './assets/android-icon-foreground.png',
         backgroundImage: './assets/android-icon-background.png',
-        monochromeImage: './assets/android-icon-monochrome.png',
+        backgroundColor: '#0A0C10',
       },
+      splash: {
+        image: './assets/splash-icon.png',
+        resizeMode: 'contain',
+        backgroundColor: '#0A0C10',
+      },
+      permissions: [
+        'android.permission.CAMERA',
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+        'android.permission.RECORD_AUDIO',
+        'android.permission.RECEIVE_BOOT_COMPLETED',
+        'android.permission.VIBRATE',
+        'android.permission.INTERNET',
+        'android.permission.ACCESS_NETWORK_STATE',
+      ],
     },
 
     web: {
@@ -51,7 +71,34 @@ export default {
 
     plugins: [
       'expo-secure-store',
-      'expo-build-properties',
+      'expo-notifications',
+      [
+        'expo-build-properties',
+        {
+          android: {
+            usesCleartextTraffic: false,
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
+            minSdkVersion: 24,
+          },
+          ios: {},
+        },
+      ],
+      [
+        'expo-av',
+        {
+          microphonePermission:
+            'Allow Oke-Osun Diocese to access your microphone for sermon recording.',
+        },
+      ],
+      [
+        'expo-image-picker',
+        {
+          photosPermission:
+            'Allow Oke-Osun Diocese to access your photos for profile and uploads.',
+          cameraPermission: 'Allow Oke-Osun Diocese to access your camera.',
+        },
+      ],
     ],
 
     extra: {
