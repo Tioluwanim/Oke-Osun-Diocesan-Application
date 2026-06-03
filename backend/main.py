@@ -49,6 +49,7 @@ local_envs  = {"local", "development", "dev", "test"}
 
 # ── CORS — safe defaults, no RuntimeError crash ──────────────────
 raw_cors = os.getenv("CORS_ORIGINS", "")
+cors_origin_regex = None
 if raw_cors:
     cors_origins = [o.strip() for o in raw_cors.split(",") if o.strip()]
 elif environment in local_envs:
@@ -57,6 +58,7 @@ elif environment in local_envs:
         "http://localhost:8081",
         "http://127.0.0.1:19006",
     ]
+    cors_origin_regex = r"^https?://(?:localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(?::\d+)?$"
 else:
     # Allow all on Render until CORS_ORIGINS env var is set in dashboard
     cors_origins = ["*"]
@@ -76,13 +78,16 @@ if allowed_hosts:
     from fastapi.middleware.trustedhost import TrustedHostMiddleware
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+cors_kwargs = {
+    "allow_origins": cors_origins,
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+if cors_origin_regex:
+    cors_kwargs["allow_origin_regex"] = cors_origin_regex
+
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 
 @app.middleware("http")
@@ -120,6 +125,7 @@ async def request_logger(request: Request, call_next):
         "path": request.url.path,
         "status_code": response.status_code,
         "duration_ms": int(duration * 1000),
+        "origin": request.headers.get("origin"),
         "client_ip": request.client.host if request.client else None,
     }))
     return response
