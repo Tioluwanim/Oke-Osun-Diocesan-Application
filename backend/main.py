@@ -7,7 +7,6 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -33,7 +32,6 @@ from routes.uploads import router as uploads_router
 from routes.payments import router as payments_router
 
 
-# ── Startup/Shutdown lifecycle ──
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.start_time = time.time()
@@ -47,26 +45,35 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, format="%(message)s")
 
 environment = os.getenv("ENVIRONMENT", "development").strip().lower()
-cors_origins = os.getenv("CORS_ORIGINS", "").split(",") if os.getenv("CORS_ORIGINS") else []
-cors_origins = [origin.strip() for origin in cors_origins if origin.strip()]
-allowed_hosts = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
-allowed_hosts = [host.strip() for host in allowed_hosts if host.strip()]
+local_envs  = {"local", "development", "dev", "test"}
 
-local_environments = {"local", "development", "dev", "test"}
-if not cors_origins:
-    if environment in local_environments:
-        cors_origins = ["http://localhost:19006", "http://localhost:8081", "http://127.0.0.1:19006"]
-    else:
-        raise RuntimeError("CORS_ORIGINS must be set explicitly outside local development")
+# ── CORS — safe defaults, no RuntimeError crash ──────────────────
+raw_cors = os.getenv("CORS_ORIGINS", "")
+if raw_cors:
+    cors_origins = [o.strip() for o in raw_cors.split(",") if o.strip()]
+elif environment in local_envs:
+    cors_origins = [
+        "http://localhost:19006",
+        "http://localhost:8081",
+        "http://127.0.0.1:19006",
+    ]
+else:
+    # Allow all on Render until CORS_ORIGINS env var is set in dashboard
+    cors_origins = ["*"]
+    logging.warning("CORS_ORIGINS not set — defaulting to * (set in Render dashboard)")
+
+# ── Allowed hosts — no RuntimeError crash ────────────────────────
+raw_hosts = os.getenv("ALLOWED_HOSTS", "")
+allowed_hosts = [h.strip() for h in raw_hosts.split(",") if h.strip()] if raw_hosts else []
 
 app = FastAPI(title="Oke-Osun Diocese API", lifespan=lifespan)
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.state.limiter = limiter
 
-if environment not in local_environments:
-    if not allowed_hosts:
-        raise RuntimeError("ALLOWED_HOSTS must be set explicitly outside local development")
+# Only add TrustedHostMiddleware if hosts are explicitly configured
+if allowed_hosts:
+    from fastapi.middleware.trustedhost import TrustedHostMiddleware
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 app.add_middleware(
@@ -83,7 +90,6 @@ async def request_logger(request: Request, call_next):
     request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
     request.state.request_id = request_id
     start_time = time.time()
-
     try:
         response = await call_next(request)
     except Exception as exc:
@@ -98,15 +104,15 @@ async def request_logger(request: Request, call_next):
             "exception": str(exc),
         }))
         raise
-
     duration = time.time() - start_time
     response.headers["X-Request-ID"] = request_id
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
-    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
     if environment == "production":
-        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
     logging.info(json.dumps({
         "message": "Request completed",
         "request_id": request_id,
@@ -121,19 +127,10 @@ async def request_logger(request: Request, call_next):
 
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    request_id = getattr(request.state, "request_id", None) or str(uuid.uuid4())
-    logging.warning(json.dumps({
-        "message": "Rate limit exceeded",
-        "request_id": request_id,
-        "method": request.method,
-        "path": request.url.path,
-        "status_code": 429,
-        "client_ip": request.client.host if request.client else None,
-    }))
     return JSONResponse(status_code=429, content={"detail": "Rate limit exceeded"})
 
 
-app.include_router(auth_router,         prefix="/auth",          tags=["Auth"])
+app.include_router(auth_router,          prefix="/auth",          tags=["Auth"])
 app.include_router(users_router,         prefix="/users",         tags=["Users"])
 app.include_router(parishes_router,      prefix="/parishes",      tags=["Parishes"])
 app.include_router(admin_router,         prefix="/admin",         tags=["Admin"])

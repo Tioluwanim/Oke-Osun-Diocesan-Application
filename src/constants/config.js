@@ -1,5 +1,11 @@
-export const APP_ENV = 'production';
-export const API_BASE_URL = 'https://oke-osun-diocesan-application.onrender.com';
+export const APP_ENV = process.env.EXPO_PUBLIC_APP_ENV || 'development';
+
+// ── API URL: reads from EAS build env var, falls back to Render URL ──
+// In development (Expo Go): set EXPO_PUBLIC_API_BASE_URL in .env
+// In preview/production builds: set via eas.json env block
+export const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  'https://oke-osun-diocesan-application.onrender.com';
 
 export const API_ROUTES = {
   register: `${API_BASE_URL}/auth/register`,
