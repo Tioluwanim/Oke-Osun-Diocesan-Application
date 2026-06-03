@@ -1,67 +1,67 @@
 import { Platform } from 'react-native';
 
 const PROD_API_BASE_URL = 'https://oke-osun-diocesan-application.onrender.com';
-const LOCAL_API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
-const ENV_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+const LOCAL_API_BASE_URL =
+  Platform.OS === 'android'
+    ? 'http://10.0.2.2:8000'
+    : 'http://localhost:8000';
 
-export const APP_ENV = process.env.EXPO_PUBLIC_APP_ENV?.trim() || (__DEV__ ? 'development' : 'production');
-export const API_BASE_URL = ENV_API_BASE_URL || (__DEV__ ? LOCAL_API_BASE_URL : PROD_API_BASE_URL);
+export const APP_ENV = __DEV__ ? 'development' : 'production';
+export const API_BASE_URL = __DEV__ ? LOCAL_API_BASE_URL : PROD_API_BASE_URL;
 
 export const API_ROUTES = {
-  register:      `${API_BASE_URL}/auth/register`,
-  login:         `${API_BASE_URL}/auth/login`,
-  refresh:       `${API_BASE_URL}/auth/refresh`,
-  logout:        `${API_BASE_URL}/auth/logout`,
-  approvalStatus:`${API_BASE_URL}/auth/approval-status`,
-  completeInvite:`${API_BASE_URL}/auth/complete-invite`,
-  currentUser:   `${API_BASE_URL}/users/me`,
+  register: `${API_BASE_URL}/auth/register`,
+  login: `${API_BASE_URL}/auth/login`,
+  refresh: `${API_BASE_URL}/auth/refresh`,
+  logout: `${API_BASE_URL}/auth/logout`,
+  approvalStatus: `${API_BASE_URL}/auth/approval-status`,
+  completeInvite: `${API_BASE_URL}/auth/complete-invite`,
+  currentUser: `${API_BASE_URL}/users/me`,
   updateProfile: `${API_BASE_URL}/users/me`,
-  changePassword:`${API_BASE_URL}/users/me/password`,
-  parishes:      `${API_BASE_URL}/parishes`,
-  parishById:    (id) => `${API_BASE_URL}/parishes/${id}`,
-  myParish:      `${API_BASE_URL}/parishes/me`,
-  myParishMembers:`${API_BASE_URL}/parishes/me/members`,
-  myParishNotices:`${API_BASE_URL}/parishes/me/notices`,
-  adminUsers:    `${API_BASE_URL}/admin/users`,
+  changePassword: `${API_BASE_URL}/users/me/password`,
+  parishes: `${API_BASE_URL}/parishes`,
+  parishById: (id) => `${API_BASE_URL}/parishes/${id}`,
+  myParish: `${API_BASE_URL}/parishes/me`,
+  myParishMembers: `${API_BASE_URL}/parishes/me/members`,
+  myParishNotices: `${API_BASE_URL}/parishes/me/notices`,
+  adminUsers: `${API_BASE_URL}/admin/users`,
   adminUserById: (id) => `${API_BASE_URL}/admin/users/${id}`,
-  adminUserInvite:`${API_BASE_URL}/admin/users/invite`,
+  adminUserInvite: `${API_BASE_URL}/admin/users/invite`,
   adminUserApprove: (id) => `${API_BASE_URL}/admin/users/${id}/approve`,
   adminUserSuspend: (id) => `${API_BASE_URL}/admin/users/${id}/suspend`,
   adminUserRole: (id) => `${API_BASE_URL}/admin/users/${id}/role`,
-  sermons:       `${API_BASE_URL}/sermons`,
-  sermonById:    (id) => `${API_BASE_URL}/sermons/${id}`,
-  events:        `${API_BASE_URL}/events`,
-  eventById:     (id) => `${API_BASE_URL}/events/${id}`,
-  live:          `${API_BASE_URL}/live`,
-  liveToggle:    `${API_BASE_URL}/live/toggle`,
-  magazines:     `${API_BASE_URL}/magazines`,
-  magazineById:       (id) => `${API_BASE_URL}/magazines/${id}`,
-  magazineApprove:    (id) => `${API_BASE_URL}/magazines/${id}/approve`,
-  magazineReject:     (id) => `${API_BASE_URL}/magazines/${id}/reject`,
-  bibleStudies:       `${API_BASE_URL}/bible-studies`,
-  bibleStudyApprove:  (id) => `${API_BASE_URL}/bible-studies/${id}/approve`,
-  bibleStudyReject:   (id) => `${API_BASE_URL}/bible-studies/${id}/reject`,
-  bibleStudyById:(id) => `${API_BASE_URL}/bible-studies/${id}`,
-  documents:     `${API_BASE_URL}/documents`,
-  documentById:      (id) => `${API_BASE_URL}/documents/${id}`,
-  documentApprove:   (id) => `${API_BASE_URL}/documents/${id}/approve`,
-  documentReject:    (id) => `${API_BASE_URL}/documents/${id}/reject`,
-  auditLogs:     `${API_BASE_URL}/admin/audit-logs`,
-  uploads:       `${API_BASE_URL}/uploads`,
-  // ── Payments ──
-  paymentsInitiate:  `${API_BASE_URL}/payments/initiate`,
-  paymentsVerify:    (ref) => `${API_BASE_URL}/payments/verify/${ref}`,
+  sermons: `${API_BASE_URL}/sermons`,
+  sermonById: (id) => `${API_BASE_URL}/sermons/${id}`,
+  events: `${API_BASE_URL}/events`,
+  eventById: (id) => `${API_BASE_URL}/events/${id}`,
+  live: `${API_BASE_URL}/live`,
+  liveToggle: `${API_BASE_URL}/live/toggle`,
+  magazines: `${API_BASE_URL}/magazines`,
+  magazineById: (id) => `${API_BASE_URL}/magazines/${id}`,
+  magazineApprove: (id) => `${API_BASE_URL}/magazines/${id}/approve`,
+  magazineReject: (id) => `${API_BASE_URL}/magazines/${id}/reject`,
+  bibleStudies: `${API_BASE_URL}/bible-studies`,
+  bibleStudyApprove: (id) => `${API_BASE_URL}/bible-studies/${id}/approve`,
+  bibleStudyReject: (id) => `${API_BASE_URL}/bible-studies/${id}/reject`,
+  bibleStudyById: (id) => `${API_BASE_URL}/bible-studies/${id}`,
+  documents: `${API_BASE_URL}/documents`,
+  documentById: (id) => `${API_BASE_URL}/documents/${id}`,
+  documentApprove: (id) => `${API_BASE_URL}/documents/${id}/approve`,
+  documentReject: (id) => `${API_BASE_URL}/documents/${id}/reject`,
+  auditLogs: `${API_BASE_URL}/admin/audit-logs`,
+  uploads: `${API_BASE_URL}/uploads`,
+  paymentsInitiate: `${API_BASE_URL}/payments/initiate`,
+  paymentsVerify: (ref) => `${API_BASE_URL}/payments/verify/${ref}`,
   paymentsMyHistory: `${API_BASE_URL}/payments/my`,
-  paymentsAdminAll:  `${API_BASE_URL}/payments/admin/all`,
-  paymentsWebhook:   `${API_BASE_URL}/payments/webhook`,
-  // ── Forgot Password ──
-  forgotPassword:    `${API_BASE_URL}/auth/forgot-password`,
-  verifyResetOtp:    `${API_BASE_URL}/auth/verify-reset-otp`,
-  resetPassword:     `${API_BASE_URL}/auth/reset-password`,
+  paymentsAdminAll: `${API_BASE_URL}/payments/admin/all`,
+  paymentsWebhook: `${API_BASE_URL}/payments/webhook`,
+  forgotPassword: `${API_BASE_URL}/auth/forgot-password`,
+  verifyResetOtp: `${API_BASE_URL}/auth/verify-reset-otp`,
+  resetPassword: `${API_BASE_URL}/auth/reset-password`,
 };
 
 export const ROLES = {
-  ADMIN:  'admin',
+  ADMIN: 'admin',
   CLERGY: 'clergy',
   MEMBER: 'member',
 };
@@ -69,6 +69,6 @@ export const ROLES = {
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'radet_auth_token',
   REFRESH_TOKEN: 'radet_refresh_token',
-  USER_DATA:  'radet_user_data',
-  ROLE:       'radet_user_role',
+  USER_DATA: 'radet_user_data',
+  ROLE: 'radet_user_role',
 };
