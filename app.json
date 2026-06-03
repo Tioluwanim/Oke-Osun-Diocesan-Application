@@ -21,7 +21,10 @@
         "NSCameraUsageDescription": "Used to upload sermon and event photos.",
         "NSPhotoLibraryUsageDescription": "Used to select photos for your profile and uploads.",
         "NSMicrophoneUsageDescription": "Used to record audio for sermons.",
-        "UIBackgroundModes": ["audio", "fetch"]
+        "UIBackgroundModes": [
+          "audio",
+          "fetch"
+        ]
       }
     },
     "android": {
@@ -41,7 +44,17 @@
         "android.permission.VIBRATE",
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE"
-      ]
+      ],
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#0A0C10",
+        "mdpi": "./assets/splash-icon.png",
+        "hdpi": "./assets/splash-icon.png",
+        "xhdpi": "./assets/splash-icon.png",
+        "xxhdpi": "./assets/splash-icon.png",
+        "xxxhdpi": "./assets/splash-icon.png"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

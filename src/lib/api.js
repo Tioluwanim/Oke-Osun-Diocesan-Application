@@ -17,7 +17,7 @@ export const registerAuthHandlers = ({ getAccessToken, getRefreshToken, updateTo
   };
 };
 
-const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_TIMEOUT_MS = 60000; // 60s — handles Render.com cold start (up to 50s)
 
 async function requestJson(url, options = {}) {
   const { auth, retry, timeoutMs, ...fetchOptions } = options;
