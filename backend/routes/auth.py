@@ -294,6 +294,7 @@ def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
     smtp_port     = int(os.getenv("SMTP_PORT", "587"))
     smtp_user     = os.getenv("SMTP_USER", "")
     smtp_password = os.getenv("SMTP_PASSWORD", "")
+    smtp_use_ssl  = os.getenv("SMTP_USE_SSL", "false").lower() in ("1", "true", "yes")
     from_email    = os.getenv("SMTP_FROM_EMAIL", smtp_user)
     from_name     = os.getenv("SMTP_FROM_NAME", "Diocese of Oke-Osun")
 
@@ -306,10 +307,8 @@ def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
         else:
             env = os.getenv("ENVIRONMENT", "production").lower()
             if env != "production":
-                # In development/staging, log the OTP so developers can test flows without SMTP.
                 logger.warning("SMTP not configured — OTP for %s is: %s", to_email, otp)
             else:
-                # In production do not log OTP values to avoid accidental leakage.
                 logger.error("SMTP not configured in production — cannot send OTP to %s", to_email)
         return False
 
@@ -341,15 +340,30 @@ def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
     msg.attach(MIMEText(html, "html"))
 
     try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.sendmail(from_email, [to_email], msg.as_string())
+        if smtp_port == 465 or smtp_use_ssl:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10) as server:
+                server.ehlo()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(from_email, [to_email], msg.as_string())
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(from_email, [to_email], msg.as_string())
         logger.info("Reset OTP email sent to %s", to_email)
         return True
     except Exception as exc:
-        logger.error("Failed to send reset email to %s: %s", to_email, exc)
+        if isinstance(exc, OSError) and getattr(exc, 'errno', None) == 101:
+            logger.error(
+                "Failed to send reset email to %s: %s. Outbound SMTP appears blocked from this host. "
+                "Verify deployment network access or use an external email service.",
+                to_email,
+                exc,
+            )
+        else:
+            logger.error("Failed to send reset email to %s: %s", to_email, exc)
         return False
 
 
@@ -498,21 +512,31 @@ async def smtp_health():
     smtp_port     = int(os.getenv("SMTP_PORT", "587"))
     smtp_user     = os.getenv("SMTP_USER", "")
     smtp_password = os.getenv("SMTP_PASSWORD", "")
+    smtp_use_ssl  = os.getenv("SMTP_USE_SSL", "false").lower() in ("1", "true", "yes")
 
     if not smtp_host:
         return {"smtp_configured": False, "can_connect": False}
 
     try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=5) as server:
-            server.ehlo()
-            try:
-                server.starttls()
-            except Exception:
-                # Some SMTP providers on local dev may not support starttls; ignore.
-                pass
-            if smtp_user and smtp_password:
-                server.login(smtp_user, smtp_password)
+        if smtp_port == 465 or smtp_use_ssl:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=5) as server:
+                server.ehlo()
+                if smtp_user and smtp_password:
+                    server.login(smtp_user, smtp_password)
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=5) as server:
+                server.ehlo()
+                try:
+                    server.starttls()
+                    server.ehlo()
+                except Exception:
+                    pass
+                if smtp_user and smtp_password:
+                    server.login(smtp_user, smtp_password)
         return {"smtp_configured": True, "can_connect": True}
     except Exception as exc:
         logger.warning("SMTP health check failed: %s", exc)
-        return {"smtp_configured": True, "can_connect": False, "error": str(exc)}
+        response = {"smtp_configured": True, "can_connect": False, "error": str(exc)}
+        if isinstance(exc, OSError) and getattr(exc, 'errno', None) == 101:
+            response["note"] = "Outbound SMTP is blocked from this host. Verify deployment network access or use a supported email provider."
+        return response
