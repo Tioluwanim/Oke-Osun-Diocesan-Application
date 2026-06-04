@@ -1,12 +1,8 @@
-import asyncio
 import hashlib
-import httpx
 import logging
 import os
 import secrets
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+# Email via Resend SDK
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Request
@@ -290,160 +286,96 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 
-def _send_reset_email_smtp(to_email: str, otp: str, full_name: str) -> bool:
-    """Send OTP via SMTP. Returns True on success, False on failure."""
-    smtp_host     = os.getenv("SMTP_HOST", "")
-    smtp_port     = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user     = os.getenv("SMTP_USER", "")
-    smtp_password = os.getenv("SMTP_PASSWORD", "")
-    smtp_use_ssl  = os.getenv("SMTP_USE_SSL", "false").lower() in ("1", "true", "yes")
-    from_email    = os.getenv("SMTP_FROM_EMAIL", smtp_user)
-    from_name     = os.getenv("SMTP_FROM_NAME", "Diocese of Oke-Osun")
-
-    # If SMTP is not configured, allow controlled logging in non-production
-    # or when explicitly forced by `FORCE_LOG_OTP` env var.
-    if not all([smtp_host, smtp_user, smtp_password]):
-        force_log = os.getenv("FORCE_LOG_OTP", "").lower() in ("1", "true", "yes")
-        if force_log:
-            logger.warning("FORCE_LOG_OTP enabled — OTP for %s is: %s", to_email, otp)
-        else:
-            env = os.getenv("ENVIRONMENT", "production").lower()
-            if env != "production":
-                logger.warning("SMTP not configured — OTP for %s is: %s", to_email, otp)
-            else:
-                logger.error("SMTP not configured in production — cannot send OTP to %s", to_email)
-        return False
-
-    html = f"""
-    <html><body style="font-family:Georgia,serif;background:#0A0C10;color:#E8E4D8;padding:32px;">
-      <div style="max-width:480px;margin:0 auto;background:#111318;border:1px solid rgba(201,168,76,0.2);border-radius:16px;padding:32px;">
-        <img src="https://storage.googleapis.com/oke-osun-assets/logo.png" width="72" height="72"
-             style="display:block;margin:0 auto 24px;border-radius:50%;" alt="Diocese of Oke-Osun"/>
-        <h2 style="color:#C9A84C;text-align:center;margin-bottom:8px;">Password Reset</h2>
-        <p style="color:#9E9A8E;text-align:center;margin-bottom:28px;">Diocese of Oke-Osun</p>
-        <p>Dear {full_name},</p>
-        <p>We received a request to reset your password. Use the code below — it expires in <strong>15 minutes</strong>.</p>
-        <div style="background:#1B2030;border:1px solid rgba(201,168,76,0.3);border-radius:12px;
-                    padding:24px;text-align:center;margin:24px 0;">
-          <span style="font-size:36px;font-weight:900;letter-spacing:10px;color:#C9A84C;">{otp}</span>
-        </div>
-        <p style="color:#7A7568;font-size:13px;">If you did not request a password reset, you can safely ignore this email.
-        Your account is secure.</p>
-        <hr style="border:none;border-top:1px solid rgba(201,168,76,0.15);margin:24px 0;"/>
-        <p style="color:#7A7568;font-size:12px;text-align:center;">Diocese of Oke-Osun · Anglican Communion</p>
-      </div>
-    </body></html>
+async def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
     """
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Your Diocese Password Reset Code"
-    msg["From"]    = f"{from_name} <{from_email}>"
-    msg["To"]      = to_email
-    msg.attach(MIMEText(html, "html"))
-
-    try:
-        if smtp_port == 465 or smtp_use_ssl:
-            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10) as server:
-                server.ehlo()
-                server.login(smtp_user, smtp_password)
-                server.sendmail(from_email, [to_email], msg.as_string())
-        else:
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(smtp_user, smtp_password)
-                server.sendmail(from_email, [to_email], msg.as_string())
-        logger.info("Reset OTP email sent to %s", to_email)
-        return True
-    except Exception as exc:
-        if isinstance(exc, OSError) and getattr(exc, 'errno', None) == 101:
-            logger.error(
-                "Failed to send reset email to %s: %s. Outbound SMTP appears blocked from this host. "
-                "Verify deployment network access or use an external email service.",
-                to_email,
-                exc,
-            )
-        else:
-            logger.error("Failed to send reset email to %s: %s", to_email, exc)
-        return False
-
-
-def _build_reset_email_html(otp: str, full_name: str) -> str:
-    return f"""
-    <html><body style=\"font-family:Georgia,serif;background:#0A0C10;color:#E8E4D8;padding:32px;\">
-      <div style=\"max-width:480px;margin:0 auto;background:#111318;border:1px solid rgba(201,168,76,0.2);border-radius:16px;padding:32px;\">
-        <img src=\"https://storage.googleapis.com/oke-osun-assets/logo.png\" width=\"72\" height=\"72\"
-             style=\"display:block;margin:0 auto 24px;border-radius:50%;\" alt=\"Diocese of Oke-Osun\"/>
-        <h2 style=\"color:#C9A84C;text-align:center;margin-bottom:8px;\">Password Reset</h2>
-        <p style=\"color:#9E9A8E;text-align:center;margin-bottom:28px;\">Diocese of Oke-Osun</p>
-        <p>Dear {full_name},</p>
-        <p>We received a request to reset your password. Use the code below — it expires in <strong>15 minutes</strong>.</p>
-        <div style=\"background:#1B2030;border:1px solid rgba(201,168,76,0.3);border-radius:12px;\"
-                    style=\"padding:24px;text-align:center;margin:24px 0;\">
-          <span style=\"font-size:36px;font-weight:900;letter-spacing:10px;color:#C9A84C;\">{otp}</span>
-        </div>
-        <p style=\"color:#7A7568;font-size:13px;\">If you did not request a password reset, you can safely ignore this email.
-        Your account is secure.</p>
-        <hr style=\"border:none;border-top:1px solid rgba(201,168,76,0.15);margin:24px 0;\"/>
-        <p style=\"color:#7A7568;font-size:12px;text-align:center;\">Diocese of Oke-Osun · Anglican Communion</p>
-      </div>
-    </body></html>
+    Send OTP via Resend.
+    Uses Resend's free default domain (onboarding@resend.dev) so no custom
+    domain or DNS setup is needed — works immediately with just a RESEND_API_KEY.
+    Get a free API key at https://resend.com (100 emails/day free tier).
     """
-
-
-async def _send_reset_email_via_resend(to_email: str, otp: str, full_name: str) -> bool:
-    resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
-    if not resend_api_key:
+    api_key = os.getenv("RESEND_API_KEY", "")
+    if not api_key:
+        # Dev fallback — log OTP so you can test without email configured
+        logger.warning("RESEND_API_KEY not set — OTP for %s is: %s", to_email, otp)
         return False
 
-    from_email = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
-    from_name = os.getenv("RESEND_FROM_NAME", os.getenv("SMTP_FROM_NAME", "Diocese of Oke-Osun"))
-    html = _build_reset_email_html(otp, full_name)
+    # Resend free tier: send from onboarding@resend.dev (no domain needed)
+    from_address = os.getenv(
+        "RESEND_FROM",
+        "Diocese of Oke-Osun <onboarding@resend.dev>"
+    )
+
+    html_body = f"""<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#0A0C10;font-family:Georgia,serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:40px 20px;">
+      <table width="480" cellpadding="0" cellspacing="0"
+             style="background:#111318;border:1px solid rgba(201,168,76,0.2);border-radius:16px;padding:40px;">
+        <tr><td align="center" style="padding-bottom:24px;">
+          <div style="width:72px;height:72px;border-radius:50%;background:rgba(201,168,76,0.1);
+                      border:1px solid rgba(201,168,76,0.3);display:inline-flex;
+                      align-items:center;justify-content:center;font-size:28px;">✝</div>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:8px;">
+          <h2 style="color:#C9A84C;margin:0;font-size:22px;letter-spacing:1px;">Password Reset</h2>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:28px;">
+          <p style="color:#7A7568;margin:0;font-size:13px;letter-spacing:0.5px;">Diocese of Oke-Osun · Anglican Communion</p>
+        </td></tr>
+        <tr><td style="color:#E8E4D8;font-size:15px;line-height:1.6;padding-bottom:20px;">
+          <p>Dear {full_name},</p>
+          <p>We received a request to reset your Diocese app password.
+             Use the verification code below — it expires in <strong>15 minutes</strong>.</p>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:28px;">
+          <div style="background:#1B2030;border:1px solid rgba(201,168,76,0.35);
+                      border-radius:12px;padding:28px 40px;display:inline-block;">
+            <span style="font-size:40px;font-weight:900;letter-spacing:14px;
+                         color:#C9A84C;font-family:monospace;">{otp}</span>
+          </div>
+        </td></tr>
+        <tr><td style="color:#7A7568;font-size:13px;line-height:1.6;padding-bottom:24px;">
+          <p>If you did not request a password reset, please ignore this email.
+             Your account remains secure.</p>
+        </td></tr>
+        <tr><td style="border-top:1px solid rgba(201,168,76,0.15);padding-top:20px;">
+          <p style="color:#7A7568;font-size:12px;text-align:center;margin:0;">
+            Diocese of Oke-Osun · Church of Nigeria · Anglican Communion
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
 
     payload = {
-        "from": f"{from_name} <{from_email}>",
-        "to": [to_email],
+        "from":    from_address,
+        "to":      [to_email],
         "subject": "Your Diocese Password Reset Code",
-        "html": html,
-    }
-    headers = {
-        "Authorization": f"Bearer {resend_api_key}",
-        "Content-Type": "application/json",
+        "html":    html_body,
     }
 
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.post("https://api.resend.com/emails", json=payload, headers=headers)
-        if response.status_code >= 300:
-            if response.status_code == 403 and response.json().get("name") == "validation_error":
-                logger.error(
-                    "Failed to send Reset OTP email via Resend to %s: %s %s — verify your sending domain in Resend.",
-                    to_email,
-                    response.status_code,
-                    response.text,
-                )
-            else:
-                logger.error(
-                    "Failed to send Reset OTP email via Resend to %s: %s %s",
-                    to_email,
-                    response.status_code,
-                    response.text,
-                )
-            if os.getenv("FORCE_LOG_OTP", "").lower() in ("1", "true", "yes"):
-                logger.warning("FORCE_LOG_OTP enabled — OTP for %s is: %s", to_email, otp)
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+        if resp.status_code in (200, 201):
+            logger.info("Reset OTP email sent via Resend to %s", to_email)
+            return True
+        else:
+            logger.error("Resend error %s: %s", resp.status_code, resp.text[:200])
             return False
-        logger.info("Reset OTP email sent via Resend to %s", to_email)
-        return True
     except Exception as exc:
-        logger.error("Failed to send Reset OTP email via Resend to %s: %s", to_email, exc)
+        logger.error("Failed to send Resend email to %s: %s", to_email, exc)
         return False
-
-
-async def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
-    if os.getenv("RESEND_API_KEY", "").strip():
-        return await _send_reset_email_via_resend(to_email, otp, full_name)
-    return await asyncio.to_thread(_send_reset_email_smtp, to_email, otp, full_name)
 
 
 @router.post("/forgot-password")
@@ -580,42 +512,3 @@ async def reset_password(request: Request, body: ResetPasswordRequest):
 
     logger.info("Password successfully reset for %s", email)
     return {"message": "Password reset successfully. Please sign in with your new password."}
-
-
-@router.get("/smtp-health")
-async def smtp_health():
-    """Lightweight SMTP health check.
-    Returns JSON indicating whether SMTP is configured and whether a test connection can be established.
-    """
-    smtp_host     = os.getenv("SMTP_HOST", "").strip()
-    smtp_port     = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user     = os.getenv("SMTP_USER", "")
-    smtp_password = os.getenv("SMTP_PASSWORD", "")
-    smtp_use_ssl  = os.getenv("SMTP_USE_SSL", "false").lower() in ("1", "true", "yes")
-
-    if not smtp_host:
-        return {"smtp_configured": False, "can_connect": False}
-
-    try:
-        if smtp_port == 465 or smtp_use_ssl:
-            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=5) as server:
-                server.ehlo()
-                if smtp_user and smtp_password:
-                    server.login(smtp_user, smtp_password)
-        else:
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=5) as server:
-                server.ehlo()
-                try:
-                    server.starttls()
-                    server.ehlo()
-                except Exception:
-                    pass
-                if smtp_user and smtp_password:
-                    server.login(smtp_user, smtp_password)
-        return {"smtp_configured": True, "can_connect": True}
-    except Exception as exc:
-        logger.warning("SMTP health check failed: %s", exc)
-        response = {"smtp_configured": True, "can_connect": False, "error": str(exc)}
-        if isinstance(exc, OSError) and getattr(exc, 'errno', None) == 101:
-            response["note"] = "Outbound SMTP is blocked from this host. Verify deployment network access or use a supported email provider."
-        return response
