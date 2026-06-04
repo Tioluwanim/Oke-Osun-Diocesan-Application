@@ -1,4 +1,6 @@
+import asyncio
 import hashlib
+import httpx
 import logging
 import os
 import secrets
@@ -288,7 +290,7 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 
-def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
+def _send_reset_email_smtp(to_email: str, otp: str, full_name: str) -> bool:
     """Send OTP via SMTP. Returns True on success, False on failure."""
     smtp_host     = os.getenv("SMTP_HOST", "")
     smtp_port     = int(os.getenv("SMTP_PORT", "587"))
@@ -367,6 +369,73 @@ def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
         return False
 
 
+def _build_reset_email_html(otp: str, full_name: str) -> str:
+    return f"""
+    <html><body style=\"font-family:Georgia,serif;background:#0A0C10;color:#E8E4D8;padding:32px;\">
+      <div style=\"max-width:480px;margin:0 auto;background:#111318;border:1px solid rgba(201,168,76,0.2);border-radius:16px;padding:32px;\">
+        <img src=\"https://storage.googleapis.com/oke-osun-assets/logo.png\" width=\"72\" height=\"72\"
+             style=\"display:block;margin:0 auto 24px;border-radius:50%;\" alt=\"Diocese of Oke-Osun\"/>
+        <h2 style=\"color:#C9A84C;text-align:center;margin-bottom:8px;\">Password Reset</h2>
+        <p style=\"color:#9E9A8E;text-align:center;margin-bottom:28px;\">Diocese of Oke-Osun</p>
+        <p>Dear {full_name},</p>
+        <p>We received a request to reset your password. Use the code below — it expires in <strong>15 minutes</strong>.</p>
+        <div style=\"background:#1B2030;border:1px solid rgba(201,168,76,0.3);border-radius:12px;\"
+                    style=\"padding:24px;text-align:center;margin:24px 0;\">
+          <span style=\"font-size:36px;font-weight:900;letter-spacing:10px;color:#C9A84C;\">{otp}</span>
+        </div>
+        <p style=\"color:#7A7568;font-size:13px;\">If you did not request a password reset, you can safely ignore this email.
+        Your account is secure.</p>
+        <hr style=\"border:none;border-top:1px solid rgba(201,168,76,0.15);margin:24px 0;\"/>
+        <p style=\"color:#7A7568;font-size:12px;text-align:center;\">Diocese of Oke-Osun · Anglican Communion</p>
+      </div>
+    </body></html>
+    """
+
+
+async def _send_reset_email_via_resend(to_email: str, otp: str, full_name: str) -> bool:
+    resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
+    if not resend_api_key:
+        return False
+
+    from_email = os.getenv("RESEND_FROM_EMAIL", os.getenv("SMTP_FROM_EMAIL", "no-reply@example.com"))
+    from_name = os.getenv("RESEND_FROM_NAME", os.getenv("SMTP_FROM_NAME", "Diocese of Oke-Osun"))
+    html = _build_reset_email_html(otp, full_name)
+
+    payload = {
+        "from": f"{from_name} <{from_email}>",
+        "to": [to_email],
+        "subject": "Your Diocese Password Reset Code",
+        "html": html,
+    }
+    headers = {
+        "Authorization": f"Bearer {resend_api_key}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post("https://api.resend.com/emails", json=payload, headers=headers)
+        if response.status_code >= 300:
+            logger.error(
+                "Failed to send Reset OTP email via Resend to %s: %s %s",
+                to_email,
+                response.status_code,
+                response.text,
+            )
+            return False
+        logger.info("Reset OTP email sent via Resend to %s", to_email)
+        return True
+    except Exception as exc:
+        logger.error("Failed to send Reset OTP email via Resend to %s: %s", to_email, exc)
+        return False
+
+
+async def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
+    if os.getenv("RESEND_API_KEY", "").strip():
+        return await _send_reset_email_via_resend(to_email, otp, full_name)
+    return await asyncio.to_thread(_send_reset_email_smtp, to_email, otp, full_name)
+
+
 @router.post("/forgot-password")
 @limiter.limit("3/minute")
 async def forgot_password(request: Request, body: ForgotPasswordRequest):
@@ -389,7 +458,7 @@ async def forgot_password(request: Request, body: ForgotPasswordRequest):
                 "updatedAt": utcnow(),
             }},
         )
-        _send_reset_email(user["email"], otp, user.get("fullName", "Beloved"))
+        await _send_reset_email(user["email"], otp, user.get("fullName", "Beloved"))
 
     return {"message": "If this email is registered, a reset code has been sent."}
 

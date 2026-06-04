@@ -4,6 +4,9 @@ Overview
 - The app sends password reset OTPs via SMTP. If SMTP credentials are not set, the server will log OTPs in non-production environments so you can test the flow locally.
 
 Environment variables (set these in Render / your host):
+- `RESEND_API_KEY` (preferred on Render; avoids blocked SMTP ports)
+- `RESEND_FROM_EMAIL` (optional)
+- `RESEND_FROM_NAME` (optional)
 - `SMTP_HOST` (e.g., smtp.sendgrid.net)
 - `SMTP_PORT` (587 for TLS)
 - `SMTP_USER`
@@ -14,8 +17,9 @@ Environment variables (set these in Render / your host):
 
 For Render:
 1. Open your service dashboard.
-2. Go to Environment > Environment Variables and add the variables above.
-3. Redeploy or restart the service.
+2. Go to Environment > Environment Variables and add the Resend or SMTP variables above.
+3. For Render deployments, `RESEND_API_KEY` is the recommended option because it avoids direct SMTP port access.
+4. Redeploy or restart the service.
 
 Local testing with MailHog (recommended):
 1. From the `backend/` folder, start MailHog with Docker Compose:
