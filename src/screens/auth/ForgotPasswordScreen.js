@@ -16,19 +16,14 @@ import {
 } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { API_ROUTES } from '../../constants/config';
+import { authApi } from '../../lib/api';
+import { translateAuthError } from '../../utils/errorTranslator';
 import AppIcon from '../../components/ui/AppIcon';
 import PasswordStrengthBar, { getPasswordStrength } from '../../components/forms/PasswordStrengthBar';
 
 // ── helpers ──────────────────────────────────────────────────
-const post = async (url, body) => {
-  const res  = await fetch(url, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.detail || 'Something went wrong. Try again.');
-  return data;
+const translateError = (err) => {
+  try { return translateAuthError(err.message || err.toString()); } catch { return 'Something went wrong. Try again.'; }
 };
 
 const STEP_LABELS = ['Email', 'Verify Code', 'New Password'];
@@ -46,11 +41,14 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState('');
   const [success,     setSuccess]     = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [focused,     setFocused]     = useState(null);
 
   // OTP digit refs for auto-advance
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
   const [otpDigits, setOtpDigits] = useState(['','','','','','']);
+  const newPwdRef = useRef();
+  const confirmPwdRef = useRef();
 
   // Shake animation for error
   const shake = useRef(new Animated.Value(0)).current;
@@ -72,9 +70,10 @@ export default function ForgotPasswordScreen({ navigation }) {
     }
     setError(''); setLoading(true);
     try {
-      await post(API_ROUTES.forgotPassword, { email: email.trim().toLowerCase() });
+      await authApi.forgotPassword({ email: email.trim().toLowerCase() });
       setStep(2);
-    } catch (e) { fail(e.message); }
+      setResendCooldown(60);
+    } catch (e) { fail(translateError(e)); }
     finally { setLoading(false); }
   };
 
@@ -84,14 +83,11 @@ export default function ForgotPasswordScreen({ navigation }) {
     if (code.length !== 6) { fail('Enter all 6 digits'); return; }
     setError(''); setLoading(true);
     try {
-      const data = await post(API_ROUTES.verifyResetOtp, {
-        email: email.trim().toLowerCase(),
-        otp:   code,
-      });
+      const data = await authApi.verifyResetOtp({ email: email.trim().toLowerCase(), otp: code });
       setResetToken(data.reset_token);
       setStep(3);
     } catch (e) {
-      fail(e.message);
+      fail(translateError(e));
       // clear OTP on wrong code
       setOtpDigits(['','','','','','']);
       otpRefs[0].current?.focus();
@@ -106,15 +102,18 @@ export default function ForgotPasswordScreen({ navigation }) {
     if (newPassword !== confirmPwd)  { fail('Passwords do not match'); return; }
     setError(''); setLoading(true);
     try {
-      await post(API_ROUTES.resetPassword, {
-        email:        email.trim().toLowerCase(),
-        reset_token:  resetToken,
-        new_password: newPassword,
-      });
+      await authApi.resetPassword({ email: email.trim().toLowerCase(), reset_token: resetToken, new_password: newPassword });
       setSuccess(true);
-    } catch (e) { fail(e.message); }
+    } catch (e) { fail(translateError(e)); }
     finally { setLoading(false); }
   };
+
+  // Resend cooldown timer
+  React.useEffect(() => {
+    if (!resendCooldown) return;
+    const t = setInterval(() => setResendCooldown(c => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
 
   // ── OTP digit input handler ──
   const handleOtpChange = (text, idx) => {
@@ -189,11 +188,12 @@ export default function ForgotPasswordScreen({ navigation }) {
 
   // ── Input wrapper ──
   const InputBox = ({ label, value, onChangeText, placeholder, keyboardType = 'default',
-    secureTextEntry, right, id, autoFocus }) => (
+    secureTextEntry, right, id, autoFocus, inputRef, returnKeyType, onSubmitEditing }) => (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputRow, focused === id && styles.inputRowFocused]}>
         <TextInput
+          ref={inputRef}
           style={styles.input}
           value={value}
           onChangeText={onChangeText}
@@ -206,6 +206,8 @@ export default function ForgotPasswordScreen({ navigation }) {
           onFocus={() => setFocused(id)}
           onBlur={() => setFocused(null)}
           autoFocus={autoFocus}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
         />
         {right}
       </View>
@@ -322,10 +324,11 @@ export default function ForgotPasswordScreen({ navigation }) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.resendBtn}
-                onPress={() => { setOtpDigits(['','','','','','']); setStep(1); setError(''); }}
+                style={[styles.resendBtn, resendCooldown > 0 && styles.resendBtnDisabled]}
+                onPress={() => { if (resendCooldown === 0) { setOtpDigits(['','','','','','']); setError(''); handleSendOtp(); } }}
+                accessibilityLabel={resendCooldown > 0 ? `Resend disabled for ${resendCooldown} seconds` : 'Resend code'}
               >
-                <Text style={styles.resendText}>Didn't receive it? Try again</Text>
+                <Text style={styles.resendText}>{resendCooldown > 0 ? `Try again in ${resendCooldown}s` : `Didn't receive it? Try again`}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -344,6 +347,9 @@ export default function ForgotPasswordScreen({ navigation }) {
                 placeholder="Min. 8 chars, uppercase, number"
                 secureTextEntry={!showPwd}
                 autoFocus
+                inputRef={newPwdRef}
+                returnKeyType="next"
+                onSubmitEditing={() => confirmPwdRef.current?.focus()}
                 right={
                   <TouchableOpacity onPress={() => setShowPwd(v => !v)}>
                     <AppIcon name={showPwd ? 'eyeOff' : 'eye'} size={18} color={COLORS.textMuted} />
@@ -358,6 +364,9 @@ export default function ForgotPasswordScreen({ navigation }) {
                 value={confirmPwd} onChangeText={setConfirmPwd}
                 placeholder="Repeat new password"
                 secureTextEntry={!showConfirm}
+                inputRef={confirmPwdRef}
+                returnKeyType="done"
+                onSubmitEditing={handleResetPassword}
                 right={
                   <TouchableOpacity onPress={() => setShowConfirm(v => !v)}>
                     <AppIcon name={showConfirm ? 'eyeOff' : 'eye'} size={18} color={COLORS.textMuted} />

@@ -297,8 +297,20 @@ def _send_reset_email(to_email: str, otp: str, full_name: str) -> bool:
     from_email    = os.getenv("SMTP_FROM_EMAIL", smtp_user)
     from_name     = os.getenv("SMTP_FROM_NAME", "Diocese of Oke-Osun")
 
+    # If SMTP is not configured, allow controlled logging in non-production
+    # or when explicitly forced by `FORCE_LOG_OTP` env var.
     if not all([smtp_host, smtp_user, smtp_password]):
-        logger.warning("SMTP not configured — OTP for %s is: %s", to_email, otp)
+        force_log = os.getenv("FORCE_LOG_OTP", "").lower() in ("1", "true", "yes")
+        if force_log:
+            logger.warning("FORCE_LOG_OTP enabled — OTP for %s is: %s", to_email, otp)
+        else:
+            env = os.getenv("ENVIRONMENT", "production").lower()
+            if env != "production":
+                # In development/staging, log the OTP so developers can test flows without SMTP.
+                logger.warning("SMTP not configured — OTP for %s is: %s", to_email, otp)
+            else:
+                # In production do not log OTP values to avoid accidental leakage.
+                logger.error("SMTP not configured in production — cannot send OTP to %s", to_email)
         return False
 
     html = f"""
@@ -475,3 +487,32 @@ async def reset_password(request: Request, body: ResetPasswordRequest):
 
     logger.info("Password successfully reset for %s", email)
     return {"message": "Password reset successfully. Please sign in with your new password."}
+
+
+@router.get("/smtp-health")
+async def smtp_health():
+    """Lightweight SMTP health check.
+    Returns JSON indicating whether SMTP is configured and whether a test connection can be established.
+    """
+    smtp_host     = os.getenv("SMTP_HOST", "").strip()
+    smtp_port     = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user     = os.getenv("SMTP_USER", "")
+    smtp_password = os.getenv("SMTP_PASSWORD", "")
+
+    if not smtp_host:
+        return {"smtp_configured": False, "can_connect": False}
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=5) as server:
+            server.ehlo()
+            try:
+                server.starttls()
+            except Exception:
+                # Some SMTP providers on local dev may not support starttls; ignore.
+                pass
+            if smtp_user and smtp_password:
+                server.login(smtp_user, smtp_password)
+        return {"smtp_configured": True, "can_connect": True}
+    except Exception as exc:
+        logger.warning("SMTP health check failed: %s", exc)
+        return {"smtp_configured": True, "can_connect": False, "error": str(exc)}

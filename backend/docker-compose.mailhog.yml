@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"   # SMTP
+      - "10000:8025"  # HTTP UI (mapped to 10000 so you can visit http://localhost:10000)
+    restart: unless-stopped

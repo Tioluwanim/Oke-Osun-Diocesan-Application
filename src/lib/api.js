@@ -207,6 +207,22 @@ export const authApi = {
     auth: true,
     body: JSON.stringify(payload),
   }),
+  // Forgot/reset password flows
+  forgotPassword: async (payload) => fetchJson(API_ROUTES.forgotPassword, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  }),
+  verifyResetOtp: async (payload) => fetchJson(API_ROUTES.verifyResetOtp, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  }),
+  resetPassword: async (payload) => fetchJson(API_ROUTES.resetPassword, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  }),
 };
 
 export const userApi = {
