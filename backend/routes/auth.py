@@ -1,8 +1,12 @@
+import asyncio
 import hashlib
+import httpx
 import logging
 import os
 import secrets
-# Email via Resend SDK
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Request
