@@ -13,6 +13,7 @@ export default function LoadingButton({
   spinnerColor = COLORS.background,
   loadingText,
   rightIcon,
+  ...props
 }) {
   const isDisabled = disabled || loading;
   return (
@@ -20,7 +21,9 @@ export default function LoadingButton({
       style={[styles.button, isDisabled && styles.disabled, style]}
       onPress={onPress}
       disabled={isDisabled}
+      accessibilityRole="button"
       activeOpacity={0.85}
+      {...props}
     >
       <View style={styles.content}>
         {loading ? <Spinner size="small" color={spinnerColor} /> : null}

@@ -153,6 +153,10 @@ export default function RegisterScreen({ navigation }) {
               <TouchableOpacity
                 style={[styles.modeChip, mode === 'register' && styles.modeChipActive]}
                 onPress={() => { setMode('register'); setError(''); }}
+                accessibilityRole="button"
+                accessibilityLabel="Create account"
+                accessibilityHint="Switch to account creation mode"
+                activeOpacity={0.8}
               >
               <Text style={[styles.modeChipText, mode === 'register' && styles.modeChipTextActive]}>
                 Create Account
@@ -161,6 +165,10 @@ export default function RegisterScreen({ navigation }) {
             <TouchableOpacity
               style={[styles.modeChip, mode === 'invite' && styles.modeChipActive]}
               onPress={() => { setMode('invite'); setError(''); }}
+              accessibilityRole="button"
+              accessibilityLabel="Activate invite"
+              accessibilityHint="Switch to the invite activation mode"
+              activeOpacity={0.8}
             >
               <Text style={[styles.modeChipText, mode === 'invite' && styles.modeChipTextActive]}>
                 Activate Invite
@@ -187,6 +195,10 @@ export default function RegisterScreen({ navigation }) {
                         selectedRole === role.key && styles.roleCardActive,
                       ]}
                       onPress={() => setSelectedRole(role.key)}
+                      accessibilityRole="button"
+                      accessibilityLabel={role.label}
+                      accessibilityHint={`Select ${role.label} registration`}
+                      activeOpacity={0.8}
                     >
                       <AppIcon name={role.icon} size={24} color={selectedRole === role.key ? COLORS.background : COLORS.gold} style={styles.roleIcon} />
                       <Text style={[
@@ -212,6 +224,8 @@ export default function RegisterScreen({ navigation }) {
                     value={fullName}
                     onChangeText={setFullName}
                     autoCapitalize="words"
+                    accessibilityLabel="Full name"
+                    accessibilityHint="Enter your full name"
                     onFocus={() => setFocusedInput('fullName')}
                     onBlur={() => setFocusedInput(null)}
                   />
@@ -231,6 +245,8 @@ export default function RegisterScreen({ navigation }) {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    accessibilityLabel="Email address"
+                    accessibilityHint="Enter your email address"
                     onFocus={() => setFocusedInput('email')}
                     onBlur={() => setFocusedInput(null)}
                   />
@@ -248,6 +264,8 @@ export default function RegisterScreen({ navigation }) {
                     value={phone}
                     onChangeText={setPhone}
                     keyboardType="phone-pad"
+                    accessibilityLabel="Phone number"
+                    accessibilityHint="Enter your phone number including country code"
                     onFocus={() => setFocusedInput('phone')}
                     onBlur={() => setFocusedInput(null)}
                   />
@@ -269,6 +287,8 @@ export default function RegisterScreen({ navigation }) {
                   onChangeText={setInviteToken}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  accessibilityLabel="Invite code"
+                  accessibilityHint="Enter the invite code provided by your administrator"
                   onFocus={() => setFocusedInput('inviteToken')}
                   onBlur={() => setFocusedInput(null)}
                 />
@@ -288,6 +308,8 @@ export default function RegisterScreen({ navigation }) {
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                accessibilityLabel="Password"
+                accessibilityHint="Enter the password for the new account"
                 onFocus={() => setFocusedInput('password')}
                 onBlur={() => setFocusedInput(null)}
               />
@@ -310,6 +332,8 @@ export default function RegisterScreen({ navigation }) {
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
                 autoCapitalize="none"
+                accessibilityLabel="Confirm password"
+                accessibilityHint="Repeat the password exactly as entered above"
                 onFocus={() => setFocusedInput('confirmPassword')}
                 onBlur={() => setFocusedInput(null)}
               />
@@ -325,6 +349,8 @@ export default function RegisterScreen({ navigation }) {
             loadingText={mode === 'invite' ? 'Activating Account' : 'Creating Account'}
             onPress={handleRegister}
             style={styles.registerButton}
+            accessibilityLabel={mode === 'invite' ? 'Activate account' : 'Create account'}
+            accessibilityHint={mode === 'invite' ? 'Activate your invited account' : 'Create a new user account'}
           />
 
           <View style={styles.dividerRow}>
@@ -336,6 +362,10 @@ export default function RegisterScreen({ navigation }) {
           <TouchableOpacity
             style={styles.loginButton}
             onPress={() => navigation.navigate('Login')}
+            accessibilityRole="button"
+            accessibilityLabel="Already have an account? Sign in"
+            accessibilityHint="Navigate back to the login screen"
+            activeOpacity={0.8}
           >
             <Text style={styles.loginButtonText}>Already have an account? Sign In</Text>
           </TouchableOpacity>

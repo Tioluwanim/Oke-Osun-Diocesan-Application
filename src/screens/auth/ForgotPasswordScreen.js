@@ -43,6 +43,8 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [success,     setSuccess]     = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [focused,     setFocused]     = useState(null);
+  const RESEND_COOLDOWN_SECONDS = 60;
+  const resendProgress = resendCooldown > 0 ? ((RESEND_COOLDOWN_SECONDS - resendCooldown) / RESEND_COOLDOWN_SECONDS) : 0;
 
   // OTP digit refs for auto-advance
   const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
@@ -203,6 +205,8 @@ export default function ForgotPasswordScreen({ navigation }) {
           autoCapitalize="none"
           autoCorrect={false}
           secureTextEntry={secureTextEntry}
+          accessibilityLabel={label}
+          accessibilityHint={`Enter your ${label.toLowerCase()}`}
           onFocus={() => setFocused(id)}
           onBlur={() => setFocused(null)}
           autoFocus={autoFocus}
@@ -230,7 +234,13 @@ export default function ForgotPasswordScreen({ navigation }) {
         <View style={styles.circle2} />
 
         {/* Header */}
-        <TouchableOpacity style={styles.backBtn} onPress={() => step > 1 ? setStep(step - 1) : navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => step > 1 ? setStep(step - 1) : navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel={step > 1 ? 'Back' : 'Sign In'}
+          accessibilityHint={step > 1 ? 'Go back to previous step' : 'Return to the login screen'}
+        >
           <AppIcon name="back" size={22} color={COLORS.gold} />
           <Text style={styles.backText}>{step > 1 ? 'Back' : 'Sign In'}</Text>
         </TouchableOpacity>
@@ -323,13 +333,24 @@ export default function ForgotPasswordScreen({ navigation }) {
                 }
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.resendBtn, resendCooldown > 0 && styles.resendBtnDisabled]}
-                onPress={() => { if (resendCooldown === 0) { setOtpDigits(['','','','','','']); setError(''); handleSendOtp(); } }}
-                accessibilityLabel={resendCooldown > 0 ? `Resend disabled for ${resendCooldown} seconds` : 'Resend code'}
-              >
-                <Text style={styles.resendText}>{resendCooldown > 0 ? `Try again in ${resendCooldown}s` : `Didn't receive it? Try again`}</Text>
-              </TouchableOpacity>
+              <View style={styles.resendContainer}>
+                <TouchableOpacity
+                  style={[styles.resendBtn, resendCooldown > 0 && styles.resendBtnDisabled]}
+                  onPress={() => { if (resendCooldown === 0) { setOtpDigits(['','','','','','']); setError(''); handleSendOtp(); } }}
+                  disabled={resendCooldown > 0}
+                  accessibilityRole="button"
+                  accessibilityLabel={resendCooldown > 0 ? `Resend code in ${resendCooldown} seconds` : 'Resend verification code'}
+                  accessibilityHint="Resend the reset code to your email"
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.resendText}>{resendCooldown > 0 ? `Try again in ${resendCooldown}s` : `Didn't receive it? Tap to resend`}</Text>
+                </TouchableOpacity>
+                {resendCooldown > 0 && (
+                  <View style={styles.progressBase}>
+                    <View style={[styles.progressFill, { width: `${Math.round(resendProgress * 100)}%` }]} />
+                  </View>
+                )}
+              </View>
             </>
           )}
 
@@ -464,8 +485,12 @@ const styles = StyleSheet.create({
   primaryBtn:     { backgroundColor: COLORS.gold, borderRadius: RADIUS.xl, height: 56, justifyContent: 'center', alignItems: 'center', elevation: 6, shadowColor: COLORS.gold, shadowOpacity: 0.3, shadowRadius: 14, shadowOffset: { width: 0, height: 6 } },
   btnDisabled:    { opacity: 0.5 },
   primaryBtnText: { color: COLORS.background, fontSize: FONTS.sizes.md, fontWeight: FONTS.weights.black, letterSpacing: 0.5 },
+  resendContainer:{ gap: 8, marginTop: SPACING.md },
   resendBtn:      { alignItems: 'center', paddingVertical: SPACING.sm },
+  resendBtnDisabled:{ opacity: 0.5 },
   resendText:     { color: COLORS.gold, fontSize: FONTS.sizes.sm },
+  progressBase:   { height: 4, borderRadius: 2, backgroundColor: COLORS.surface, overflow: 'hidden' },
+  progressFill:   { height: '100%', backgroundColor: COLORS.gold, borderRadius: 2 },
 
   // Success
   successWrap:  { flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl, gap: SPACING.md },

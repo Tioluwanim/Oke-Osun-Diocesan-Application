@@ -106,6 +106,8 @@ export default function LoginScreen({ navigation }) {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  accessibilityLabel="Email address"
+                  accessibilityHint="Enter your email address"
                   onFocus={() => setFocusedInput('email')}
                   onBlur={() => setFocusedInput(null)}
                 />
@@ -125,6 +127,8 @@ export default function LoginScreen({ navigation }) {
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  accessibilityLabel="Password"
+                  accessibilityHint="Enter your account password"
                   onFocus={() => setFocusedInput('password')}
                   onBlur={() => setFocusedInput(null)}
                 />
@@ -137,6 +141,10 @@ export default function LoginScreen({ navigation }) {
             <TouchableOpacity
               style={styles.forgotContainer}
               onPress={() => navigation.navigate('ForgotPassword')}
+              accessibilityRole="button"
+              accessibilityLabel="Forgot password"
+              accessibilityHint="Navigate to the password reset screen"
+              activeOpacity={0.8}
             >
               <Text style={styles.forgotText}>Forgot password?</Text>
             </TouchableOpacity>
@@ -148,6 +156,8 @@ export default function LoginScreen({ navigation }) {
               loadingText="Signing In"
               onPress={() => { Keyboard.dismiss(); handleLogin(); }}
               style={styles.loginButton}
+              accessibilityLabel="Sign in"
+              accessibilityHint="Submit your login credentials"
             />
 
             {/* Divider */}
@@ -161,6 +171,10 @@ export default function LoginScreen({ navigation }) {
             <TouchableOpacity
               style={styles.registerButton}
               onPress={() => navigation.navigate('Register')}
+              accessibilityRole="button"
+              accessibilityLabel="Create new account"
+              accessibilityHint="Navigate to the registration screen"
+              activeOpacity={0.8}
             >
               <Text style={styles.registerButtonText}>Create New Account</Text>
             </TouchableOpacity>
