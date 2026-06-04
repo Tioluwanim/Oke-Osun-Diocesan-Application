@@ -45,10 +45,6 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [focused,     setFocused]     = useState(null);
   const RESEND_COOLDOWN_SECONDS = 60;
   const resendProgress = resendCooldown > 0 ? ((RESEND_COOLDOWN_SECONDS - resendCooldown) / RESEND_COOLDOWN_SECONDS) : 0;
-
-  // OTP digit refs for auto-advance
-  const otpRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()];
-  const [otpDigits, setOtpDigits] = useState(['','','','','','']);
   const newPwdRef = useRef();
   const confirmPwdRef = useRef();
 
@@ -81,7 +77,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
   // ── Step 2 — verify OTP ──
   const handleVerifyOtp = async () => {
-    const code = otpDigits.join('');
+    const code = otp.trim();
     if (code.length !== 6) { fail('Enter all 6 digits'); return; }
     setError(''); setLoading(true);
     try {
@@ -90,9 +86,7 @@ export default function ForgotPasswordScreen({ navigation }) {
       setStep(3);
     } catch (e) {
       fail(translateError(e));
-      // clear OTP on wrong code
-      setOtpDigits(['','','','','','']);
-      otpRefs[0].current?.focus();
+      setOtp('');
     } finally { setLoading(false); }
   };
 
@@ -118,19 +112,6 @@ export default function ForgotPasswordScreen({ navigation }) {
   }, [resendCooldown]);
 
   // ── OTP digit input handler ──
-  const handleOtpChange = (text, idx) => {
-    const digit = text.replace(/[^0-9]/g, '').slice(-1);
-    const next  = [...otpDigits];
-    next[idx]   = digit;
-    setOtpDigits(next);
-    if (digit && idx < 5) otpRefs[idx + 1].current?.focus();
-  };
-
-  const handleOtpKey = (e, idx) => {
-    if (e.nativeEvent.key === 'Backspace' && !otpDigits[idx] && idx > 0) {
-      otpRefs[idx - 1].current?.focus();
-    }
-  };
 
   // ── Strength bar ──
   const strength = getPasswordStrength(newPassword);
@@ -190,7 +171,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
   // ── Input wrapper ──
   const InputBox = ({ label, value, onChangeText, placeholder, keyboardType = 'default',
-    secureTextEntry, right, id, autoFocus, inputRef, returnKeyType, onSubmitEditing }) => (
+    secureTextEntry, right, id, autoFocus, inputRef, returnKeyType, onSubmitEditing, maxLength }) => (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputRow, focused === id && styles.inputRowFocused]}>
@@ -204,8 +185,7 @@ export default function ForgotPasswordScreen({ navigation }) {
           keyboardType={keyboardType}
           autoCapitalize="none"
           autoCorrect={false}
-          secureTextEntry={secureTextEntry}
-          accessibilityLabel={label}
+          secureTextEntry={secureTextEntry}          maxLength={maxLength}          accessibilityLabel={label}
           accessibilityHint={`Enter your ${label.toLowerCase()}`}
           onFocus={() => setFocused(id)}
           onBlur={() => setFocused(null)}
@@ -225,7 +205,7 @@ export default function ForgotPasswordScreen({ navigation }) {
     >
       <ScrollView
         contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
@@ -303,23 +283,18 @@ export default function ForgotPasswordScreen({ navigation }) {
                 {'\n'}Check your inbox (and spam folder).
               </Text>
 
-              <View style={styles.otpRow}>
-                {otpDigits.map((digit, idx) => (
-                  <TextInput
-                    key={idx}
-                    ref={otpRefs[idx]}
-                    style={[styles.otpBox, digit && styles.otpBoxFilled]}
-                    value={digit}
-                    onChangeText={t => handleOtpChange(t, idx)}
-                    onKeyPress={e => handleOtpKey(e, idx)}
-                    keyboardType="number-pad"
-                    maxLength={1}
-                    textAlign="center"
-                    selectTextOnFocus
-                    caretHidden
-                  />
-                ))}
-              </View>
+              <InputBox
+                id="otp"
+                label="Reset Code"
+                value={otp}
+                onChangeText={text => setOtp(text.replace(/[^0-9]/g, '').slice(0, 6))}
+                placeholder="Enter 6-digit code"
+                keyboardType="number-pad"
+                autoFocus
+                maxLength={6}
+                returnKeyType="done"
+                onSubmitEditing={handleVerifyOtp}
+              />
 
               <TouchableOpacity
                 style={[styles.primaryBtn, loading && styles.btnDisabled]}
@@ -336,7 +311,7 @@ export default function ForgotPasswordScreen({ navigation }) {
               <View style={styles.resendContainer}>
                 <TouchableOpacity
                   style={[styles.resendBtn, resendCooldown > 0 && styles.resendBtnDisabled]}
-                  onPress={() => { if (resendCooldown === 0) { setOtpDigits(['','','','','','']); setError(''); handleSendOtp(); } }}
+                  onPress={() => { if (resendCooldown === 0) { setOtp(''); setError(''); handleSendOtp(); } }}
                   disabled={resendCooldown > 0}
                   accessibilityRole="button"
                   accessibilityLabel={resendCooldown > 0 ? `Resend code in ${resendCooldown} seconds` : 'Resend verification code'}
@@ -372,7 +347,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                 returnKeyType="next"
                 onSubmitEditing={() => confirmPwdRef.current?.focus()}
                 right={
-                  <TouchableOpacity onPress={() => setShowPwd(v => !v)}>
+                  <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} onPress={() => setShowPwd(v => !v)}>
                     <AppIcon name={showPwd ? 'eyeOff' : 'eye'} size={18} color={COLORS.textMuted} />
                   </TouchableOpacity>
                 }
@@ -389,7 +364,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                 returnKeyType="done"
                 onSubmitEditing={handleResetPassword}
                 right={
-                  <TouchableOpacity onPress={() => setShowConfirm(v => !v)}>
+                  <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} onPress={() => setShowConfirm(v => !v)}>
                     <AppIcon name={showConfirm ? 'eyeOff' : 'eye'} size={18} color={COLORS.textMuted} />
                   </TouchableOpacity>
                 }
@@ -465,7 +440,7 @@ const styles = StyleSheet.create({
   label:       { fontSize: FONTS.sizes.sm, color: COLORS.textLight, fontWeight: FONTS.weights.semibold, letterSpacing: 0.4 },
   inputRow:    { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg, paddingHorizontal: SPACING.md, height: 54 },
   inputRowFocused: { borderColor: COLORS.gold },
-  input:       { flex: 1, color: COLORS.text, fontSize: FONTS.sizes.md, height: '100%' },
+  input:       { flex: 1, color: COLORS.text, fontSize: FONTS.sizes.md, height: '100%', paddingRight: SPACING.sm },
 
   // OTP
   otpRow:      { flexDirection: 'row', justifyContent: 'space-between', gap: SPACING.sm },
