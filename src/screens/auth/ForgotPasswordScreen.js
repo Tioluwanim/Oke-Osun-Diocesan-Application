@@ -22,6 +22,7 @@ import {
   ActivityIndicator,
   Animated,
   StatusBar,
+  Keyboard,
 } from 'react-native';
 import { COLORS, FONTS, SPACING, RADIUS } from '../../constants/theme';
 import { authApi } from '../../lib/api';
@@ -64,7 +65,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [focused, setFocused] = useState(null);
 
-  const otpInputRef = useRef(null);
+  const otpRef = useRef(null);
   const newPwdRef = useRef(null);
   const confirmPwdRef = useRef(null);
 
@@ -117,8 +118,8 @@ export default function ForgotPasswordScreen({ navigation }) {
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
 
       setTimeout(() => {
-        otpInputRef.current?.focus?.();
-      }, 100);
+        otpRef.current?.focus?.();
+      }, 120);
     } catch (e) {
       fail(translateError(e));
     } finally {
@@ -148,7 +149,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
       setTimeout(() => {
         newPwdRef.current?.focus?.();
-      }, 100);
+      }, 120);
     } catch (e) {
       fail(translateError(e));
       setOtp('');
@@ -210,8 +211,8 @@ export default function ForgotPasswordScreen({ navigation }) {
 
     setStep(2);
     setTimeout(() => {
-      otpInputRef.current?.focus?.();
-    }, 100);
+      otpRef.current?.focus?.();
+    }, 120);
   };
 
   const StepBar = () => (
@@ -277,11 +278,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   }) => (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
-
-      <View
-        style={[styles.inputRow, focused === id && styles.inputRowFocused]}
-        pointerEvents="auto"
-      >
+      <View style={[styles.inputRow, focused === id && styles.inputRowFocused]}>
         <TextInput
           ref={inputRef}
           style={styles.input}
@@ -303,78 +300,12 @@ export default function ForgotPasswordScreen({ navigation }) {
           onSubmitEditing={onSubmitEditing}
           textContentType={textContentType}
           autoComplete={autoComplete}
+          underlineColorAndroid="transparent"
         />
         {right}
       </View>
     </View>
   );
-
-  const OtpInput = () => {
-    const digits = Array.from({ length: 6 }, (_, index) => otp[index] || '');
-
-    return (
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Reset Code</Text>
-
-        <View
-          style={[
-            styles.otpContainer,
-            focused === 'otp' && styles.inputRowFocused,
-          ]}
-          pointerEvents="auto"
-        >
-          <TouchableOpacity
-            activeOpacity={0.95}
-            style={styles.otpTouchArea}
-            onPress={() => otpInputRef.current?.focus?.()}
-          >
-            {digits.map((digit, index) => {
-              const isActive = otp.length === index;
-              const isFilled = !!digit;
-
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.otpBox,
-                    isFilled && styles.otpBoxFilled,
-                    isActive && styles.otpBoxActive,
-                  ]}
-                >
-                  <Text style={styles.otpDigit}>{digit}</Text>
-                </View>
-              );
-            })}
-          </TouchableOpacity>
-
-          <TextInput
-            ref={otpInputRef}
-            value={otp}
-            onChangeText={(text) => {
-              const cleaned = text.replace(/[^0-9]/g, '').slice(0, 6);
-              setOtp(cleaned);
-            }}
-            style={styles.hiddenOtpInput}
-            keyboardType="number-pad"
-            returnKeyType="done"
-            maxLength={6}
-            autoCorrect={false}
-            autoCapitalize="none"
-            textContentType="oneTimeCode"
-            autoComplete="sms-otp"
-            importantForAutofill="yes"
-            onFocus={() => setFocused('otp')}
-            onBlur={() => setFocused(null)}
-            onSubmitEditing={handleVerifyOtp}
-          />
-        </View>
-
-        <Text style={styles.otpHelp}>
-          Enter the 6-digit code sent to your email.
-        </Text>
-      </View>
-    );
-  };
 
   if (success) {
     return (
@@ -412,11 +343,10 @@ export default function ForgotPasswordScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
       <ScrollView
         contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="always"
+        keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
         automaticallyAdjustKeyboardInsets
-        nestedScrollEnabled
       >
         <View pointerEvents="none" style={styles.circle1} />
         <View pointerEvents="none" style={styles.circle2} />
@@ -500,7 +430,21 @@ export default function ForgotPasswordScreen({ navigation }) {
                 {'\n'}Check your inbox and spam folder.
               </Text>
 
-              <OtpInput />
+              <InputBox
+                id="otp"
+                label="Reset Code"
+                value={otp}
+                onChangeText={(text) => setOtp(text.replace(/[^0-9]/g, '').slice(0, 6))}
+                placeholder="Enter 6-digit code"
+                keyboardType="number-pad"
+                autoFocus
+                inputRef={otpRef}
+                maxLength={6}
+                returnKeyType="done"
+                onSubmitEditing={handleVerifyOtp}
+                textContentType="oneTimeCode"
+                autoComplete="sms-otp"
+              />
 
               <TouchableOpacity
                 style={[styles.primaryBtn, loading && styles.btnDisabled]}
@@ -615,7 +559,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                 secureTextEntry={!showConfirm}
                 inputRef={confirmPwdRef}
                 returnKeyType="done"
-                onSubmitEditing={handleResetPassword}
+                onSubmitEditing={Keyboard.dismiss}
                 right={
                   <TouchableOpacity
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -919,7 +863,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.md,
     height: 54,
-    zIndex: 1,
   },
 
   inputRowFocused: {
@@ -935,78 +878,9 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
 
-  otpContainer: {
-    position: 'relative',
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.lg,
-    padding: 12,
-    zIndex: 1,
-  },
-
-  otpTouchArea: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  otpBox: {
-    width: 42,
-    height: 52,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surfaceElevated,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  otpBoxFilled: {
-    borderColor: COLORS.gold,
-    backgroundColor: 'rgba(201,168,76,0.08)',
-  },
-
-  otpBoxActive: {
-    borderColor: COLORS.gold,
-    backgroundColor: 'rgba(201,168,76,0.12)',
-  },
-
-  otpDigit: {
-    fontSize: 22,
-    fontWeight: FONTS.weights.black,
-    color: COLORS.text,
-  },
-
-  hiddenOtpInput: {
-    position: 'absolute',
-    opacity: 0,
-    width: '100%',
-    height: '100%',
-  },
-
-  otpHelp: {
-    marginTop: 8,
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
-  },
-
   strengthBlock: {
     marginTop: 2,
     marginBottom: SPACING.md,
-    zIndex: 0,
-  },
-
-  matchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-
-  matchText: {
-    fontSize: 12,
-    marginLeft: 4,
-    fontWeight: FONTS.weights.semibold,
   },
 
   primaryBtn: {
@@ -1065,6 +939,18 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: COLORS.gold,
     borderRadius: 2,
+  },
+
+  matchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+
+  matchText: {
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: FONTS.weights.semibold,
   },
 
   successWrap: {
