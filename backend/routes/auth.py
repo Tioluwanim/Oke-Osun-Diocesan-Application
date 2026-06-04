@@ -397,7 +397,7 @@ async def _send_reset_email_via_resend(to_email: str, otp: str, full_name: str) 
     if not resend_api_key:
         return False
 
-    from_email = os.getenv("RESEND_FROM_EMAIL", os.getenv("SMTP_FROM_EMAIL", "no-reply@example.com"))
+    from_email = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
     from_name = os.getenv("RESEND_FROM_NAME", os.getenv("SMTP_FROM_NAME", "Diocese of Oke-Osun"))
     html = _build_reset_email_html(otp, full_name)
 
@@ -416,12 +416,22 @@ async def _send_reset_email_via_resend(to_email: str, otp: str, full_name: str) 
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.post("https://api.resend.com/emails", json=payload, headers=headers)
         if response.status_code >= 300:
-            logger.error(
-                "Failed to send Reset OTP email via Resend to %s: %s %s",
-                to_email,
-                response.status_code,
-                response.text,
-            )
+            if response.status_code == 403 and response.json().get("name") == "validation_error":
+                logger.error(
+                    "Failed to send Reset OTP email via Resend to %s: %s %s — verify your sending domain in Resend.",
+                    to_email,
+                    response.status_code,
+                    response.text,
+                )
+            else:
+                logger.error(
+                    "Failed to send Reset OTP email via Resend to %s: %s %s",
+                    to_email,
+                    response.status_code,
+                    response.text,
+                )
+            if os.getenv("FORCE_LOG_OTP", "").lower() in ("1", "true", "yes"):
+                logger.warning("FORCE_LOG_OTP enabled — OTP for %s is: %s", to_email, otp)
             return False
         logger.info("Reset OTP email sent via Resend to %s", to_email)
         return True

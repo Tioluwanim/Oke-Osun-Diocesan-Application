@@ -5,7 +5,7 @@ Overview
 
 Environment variables (set these in Render / your host):
 - `RESEND_API_KEY` (preferred on Render; avoids blocked SMTP ports)
-- `RESEND_FROM_EMAIL` (optional)
+- `RESEND_FROM_EMAIL` (optional; for quick Resend testing, `onboarding@resend.dev` is a valid developer sender. For real user delivery, switch to a verified sending domain.)
 - `RESEND_FROM_NAME` (optional)
 - `SMTP_HOST` (e.g., smtp.sendgrid.net)
 - `SMTP_PORT` (587 for TLS)
@@ -20,7 +20,12 @@ For Render:
 2. Go to Environment > Environment Variables and add the Resend or SMTP variables above.
 3. For Render deployments, `RESEND_API_KEY` is the recommended option because it avoids direct SMTP port access.
 4. Redeploy or restart the service.
-
+No domain yet?
+- If you still do not have a verified sending domain, do not set `RESEND_API_KEY` or SMTP credentials.
+- Set `FORCE_LOG_OTP=true` and the backend will log the reset OTP code instead of sending an email.
+- Use the rendered service logs to retrieve the code for password reset testing.
+- For Resend integration testing, you can use the developer sender address `onboarding@resend.dev` as the `RESEND_FROM_EMAIL` value.
+- The Resend docs show this sample send path: `from: onboarding@resend.dev`, `to: delivered@resend.dev`.
 Local testing with MailHog (recommended):
 1. From the `backend/` folder, start MailHog with Docker Compose:
 
