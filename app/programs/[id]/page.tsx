@@ -57,8 +57,8 @@ export default async function ProgramDetailPage({ params }: { params: { id: stri
             <h2 className="mt-10">Schedule</h2>
             <ul className="mt-4 space-y-3">
               {program.schedule.map((s) => (
-                <li key={s.time} className="flex gap-4 border-b border-line pb-3">
-                  <span className="w-40 shrink-0 font-semibold text-navy">{s.time}</span>
+                <li key={s.time} className="flex flex-col gap-1 border-b border-line pb-3 sm:flex-row sm:gap-4">
+                  <span className="shrink-0 font-semibold text-navy sm:w-40">{s.time}</span>
                   <span className="text-ink-muted">{s.activity}</span>
                 </li>
               ))}

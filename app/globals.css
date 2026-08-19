@@ -123,7 +123,7 @@
   .container-diocese {
     width: min(100%, 1280px);
     margin-inline: auto;
-    padding-inline: 1rem;
+    padding-inline: clamp(0.875rem, 3vw, 1.5rem);
   }
 
   .btn,
@@ -234,7 +234,7 @@
   }
 
   .cinematic-hero {
-    min-height: min(760px, 82vh);
+    min-height: clamp(320px, 52vh, 560px);
   }
 
   .cinematic-hero > img {
@@ -254,6 +254,12 @@
 
   .loader-stage {
     animation: loader-fade 2.2s ease-in-out infinite;
+  }
+
+  @media (max-width: 640px) {
+    .section {
+      padding-block: 3rem;
+    }
   }
 }
 

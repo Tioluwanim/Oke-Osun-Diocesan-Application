@@ -36,9 +36,9 @@ export default function SupportPage() {
             <div className="mt-8 card p-6">
               <h3>Bank Details</h3>
               <dl className="mt-4 space-y-3 text-ink-muted">
-                <div className="flex justify-between gap-4 border-b border-line pb-2"><dt>Bank Name</dt><dd className="font-medium text-navy">First Bank PLC</dd></div>
-                <div className="flex justify-between gap-4 border-b border-line pb-2"><dt>Account Name</dt><dd className="font-medium text-navy">Oke-Osun Diocese</dd></div>
-                <div className="flex justify-between gap-4"><dt>Account Number</dt><dd className="font-medium text-navy">1234567890</dd></div>
+                <div className="flex flex-col gap-1 border-b border-line pb-2 sm:flex-row sm:justify-between sm:gap-4"><dt>Bank Name</dt><dd className="font-medium text-navy">First Bank PLC</dd></div>
+                <div className="flex flex-col gap-1 border-b border-line pb-2 sm:flex-row sm:justify-between sm:gap-4"><dt>Account Name</dt><dd className="font-medium text-navy">Oke-Osun Diocese</dd></div>
+                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4"><dt>Account Number</dt><dd className="font-medium text-navy">1234567890</dd></div>
               </dl>
             </div>
           </div>

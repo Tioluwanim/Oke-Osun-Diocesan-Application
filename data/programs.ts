@@ -70,7 +70,7 @@ export const programs: Program[] = [
     type: 'seminar',
     description: 'An annual seminar equipping clergy wives for ministry alongside their husbands.',
     date: '2026-10-14',
-    location: 'Diocesan Secretariat, Ilesa',
+    location: 'Bishop Court, Osogbo Road, Gbongan, Osun State',
     eligibility: 'Wives of clergy in the Diocese',
     registrationDeadline: '2026-10-01',
     availablePlaces: 40,

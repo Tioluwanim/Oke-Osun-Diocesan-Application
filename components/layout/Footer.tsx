@@ -61,7 +61,7 @@ export default function Footer() {
         <div>
           <h2 className="mb-4 text-base font-semibold text-white">Contact</h2>
           <ul className="space-y-2 text-sm">
-            <li>Diocesan Secretariat, Ilesa, Osun State, Nigeria</li>
+            <li>Bishop Court, Osogbo Road, Gbongan, Osun State, Nigeria</li>
             <li>
               <a href="tel:+2340000000000" className="hover:text-gold">+234 000 000 0000</a>
             </li>
