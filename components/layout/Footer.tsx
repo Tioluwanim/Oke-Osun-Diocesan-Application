@@ -5,7 +5,7 @@ const QUICK_LINKS = [
   { label: 'Groups', href: '/groups' },
   { label: 'Events', href: '/events' },
   { label: 'Sermons', href: '/sermons' },
-  { label: 'Giving', href: '/give' },
+  { label: 'Support & Giving', href: '/support' },
   { label: 'Contact', href: '/contact' },
 ];
 
@@ -22,7 +22,7 @@ export default function Footer() {
       <div className="container-diocese grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="mb-4 flex items-center gap-3">
-            <Image src="/images/logo.png" alt="" width={40} height={40} className="h-10 w-10 object-contain" />
+            <Image src="/images/logo-transparent.png" alt="" width={40} height={40} className="h-10 w-10 object-contain" />
             <span className="font-display text-lg text-white">Oke-Osun Diocese</span>
           </div>
           <p className="text-sm leading-relaxed">

@@ -26,7 +26,7 @@ export default function HomePage() {
           <p className="mx-auto mt-3 max-w-xl text-white/80">
             Your tithes, offerings, and gifts sustain the mission and ministries of the Diocese.
           </p>
-          <Link href="/give" className="btn-primary mt-6 inline-flex">
+          <Link href="/support" className="btn-primary mt-6 inline-flex">
             Give Now
           </Link>
         </div>

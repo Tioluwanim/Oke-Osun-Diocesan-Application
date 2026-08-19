@@ -26,14 +26,14 @@ export default function LogoLoader({
   return (
     <div className={`inline-flex items-center gap-3 ${className}`} role="status" aria-live="polite">
       <span
-        className="relative inline-flex items-center justify-center rounded-full border border-gold/40 bg-white/70 shadow-[0_0_0_8px_rgba(201,162,39,0.08)]"
+        className="loader-stage relative inline-flex items-center justify-center rounded-full border border-gold/40 bg-white/70 shadow-[0_0_0_8px_rgba(201,162,39,0.08)]"
         style={{ width: px, height: px }}
       >
-        <span className="absolute inset-0 rounded-full border-2 border-gold/60 animate-[spin_2.1s_linear_infinite]" />
-        <span className="absolute inset-[10%] rounded-full border border-gold/40 animate-[spin_3.8s_linear_infinite_reverse]" />
+        <span className="loader-orbit absolute inset-[-8%] rounded-full border-2 border-transparent border-t-gold border-r-gold/50" />
+        <span className="loader-orbit loader-orbit-delayed absolute inset-[10%] rounded-full border border-transparent border-b-blue border-l-gold/60" />
         <span className="absolute inset-[22%] rounded-full bg-gold/10 animate-pulse" />
         <Image
-          src="/images/logo.png"
+          src="/images/logo-transparent.png"
           alt=""
           width={px}
           height={px}
@@ -54,7 +54,7 @@ export default function LogoLoader({
 export function FullPageLoader({ label = 'Loading the page…' }: { label?: string }) {
   return (
     <div className="flex min-h-[60vh] w-full items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(201,162,39,0.12),_transparent_45%),_linear-gradient(135deg,_#f8f6ef_0%,_#eef3f9_100%)] px-4 py-10">
-      <div className="flex flex-col items-center justify-center gap-6 rounded-[28px] border border-gold/30 bg-white/70 px-8 py-9 shadow-[0_24px_70px_rgba(6,26,53,0.12)] backdrop-blur-sm">
+      <div className="loader-panel flex flex-col items-center justify-center gap-6 rounded-[28px] border border-gold/30 bg-white/70 px-8 py-9 shadow-[0_24px_70px_rgba(6,26,53,0.12)] backdrop-blur-sm">
         <LogoLoader size="lg" showLabel={false} />
         <div className="flex flex-col items-center gap-2">
           <p className="text-lg font-semibold text-navy">{label}</p>

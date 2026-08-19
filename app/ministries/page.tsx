@@ -1,16 +1,19 @@
 import type { Metadata } from 'next';
 import PageHero from '@/components/ui/PageHero';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import Reveal from '@/components/ui/Reveal';
 
 export const metadata: Metadata = { title: 'Ministries' };
 
 const MINISTRIES = [
-  { name: 'Evangelism & Missions', blurb: 'Taking the Gospel to communities within and beyond the Diocese.' },
-  { name: 'Discipleship & Christian Education', blurb: 'Bible study, catechism, and spiritual formation for all ages.' },
-  { name: 'Music & Liturgy', blurb: 'Choirs and worship teams leading the Diocese in praise.' },
-  { name: 'Welfare & Community Service', blurb: 'Caring for the vulnerable and serving the wider community.' },
-  { name: 'Prison & Hospital Ministry', blurb: 'Visitation and pastoral care for the incarcerated and the sick.' },
-  { name: 'Men\'s Fellowship', blurb: 'Fellowship, discipleship, and service for men across the Diocese.' },
+  { label: 'WOMEN', name: 'Women Ministry', blurb: 'Empowering women through prayer, fellowship, discipleship and compassionate service.' },
+  { label: 'GIRLS', name: "Girls' Guild", blurb: 'Helping young girls grow in faith, character, confidence and service.' },
+  { label: 'BOYS', name: 'Boys Brigade', blurb: 'Developing discipline, leadership, Christian character and practical skills.' },
+  { label: 'YOUTH', name: 'Youth Ministry', blurb: 'Equipping young people to follow Christ and become positive kingdom leaders.' },
+  { label: 'MEN', name: 'Men Ministry', blurb: 'Building godly men through fellowship, prayer, leadership and responsible service.' },
+  { label: 'CHILDREN', name: 'Children Ministry', blurb: "Creating a joyful environment where children learn God's Word and grow in faith." },
+  { label: 'WORSHIP', name: 'Choir Ministry', blurb: 'Using music and worship to glorify God and lead His people into joyful praise.' },
+  { label: 'MISSION', name: 'Evangelism Ministry', blurb: 'Sharing the Gospel, reaching communities and making disciples for Christ.' },
 ];
 
 export default function MinistriesPage() {
@@ -30,11 +33,13 @@ export default function MinistriesPage() {
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {MINISTRIES.map((m) => (
-              <div key={m.name} className="card p-6">
+            {MINISTRIES.map((m, index) => (
+              <Reveal key={m.name} delay={(index % 4) * 80} className="card overflow-hidden p-6">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{m.label}</span>
                 <h3 className="text-lg">{m.name}</h3>
                 <p className="mt-2 text-sm text-ink-muted">{m.blurb}</p>
-              </div>
+                <span className="mt-5 inline-flex text-sm font-semibold text-blue">Discover Ministry <span aria-hidden="true" className="ml-2 transition-transform group-hover:translate-x-1">→</span></span>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -42,7 +47,7 @@ export default function MinistriesPage() {
 
       <section className="section bg-cream">
         <div className="container-diocese">
-          <div className="mx-auto max-w-5xl rounded-card border border-line bg-white p-8 shadow-soft">
+          <Reveal className="mx-auto max-w-5xl rounded-card border border-line bg-white p-8 shadow-soft">
             <div className="grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
               <div>
                 <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Share Your Story</span>
@@ -76,7 +81,7 @@ export default function MinistriesPage() {
                 <button type="submit" className="btn-primary w-full">Submit Testimony</button>
               </form>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
     </>

@@ -1,18 +1,30 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #ffffff;
+  --color-cream: #f8f6ef;
+  --color-navy: #061a35;
+  --color-blue: #0b3d73;
+  --color-gold: #c9a227;
+  --color-gold-light: #f0d879;
+  --color-ink: #2b3646;
+  --color-ink-muted: #5b6a7a;
+  --color-line: #e4e7eb;
+
+  --font-display: var(--font-cinzel), Georgia, serif;
+  --font-body: var(--font-poppins), system-ui, sans-serif;
+
+  --shadow-diocese: 0 15px 45px rgba(4, 21, 45, 0.15);
+  --shadow-soft: 0 8px 24px rgba(4, 21, 45, 0.08);
+
+  --radius-card: 14px;
+
+  --ease-diocese-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
 
 @layer base {
   :root {
     color-scheme: light;
-    --color-surface: #ffffff;
-    --color-cream: #f8f6ef;
-    --color-navy: #061a35;
-    --color-blue: #0b3d73;
-    --color-gold: #c9a227;
-    --color-gold-light: #f0d879;
-    --color-ink: #2b3646;
-    --color-ink-muted: #5b6a7a;
   }
 
   * {
@@ -26,11 +38,15 @@
   }
 
   body {
-    @apply bg-surface text-ink font-body antialiased;
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image: radial-gradient(circle at top, rgba(201, 162, 39, 0.08), transparent 32%);
     margin: 0;
     min-height: 100vh;
     overflow-x: hidden;
-    background-image: radial-gradient(circle at top, rgba(201, 162, 39, 0.08), transparent 32%);
   }
 
   body::before {
@@ -48,27 +64,34 @@
   }
 
   a {
-    @apply transition-colors duration-200;
+    transition: color 200ms ease;
   }
 
   p {
-    @apply leading-relaxed;
+    line-height: 1.7;
   }
 
   h1, h2, h3, h4 {
-    @apply font-display text-navy;
+    font-family: var(--font-display);
+    color: var(--color-navy);
   }
 
   h1 {
-    @apply text-[clamp(2rem,4vw+1rem,3.25rem)] font-semibold leading-tight;
+    font-size: clamp(2rem, 4vw + 1rem, 3.25rem);
+    font-weight: 600;
+    line-height: 1.1;
   }
 
   h2 {
-    @apply text-[clamp(1.5rem,2.5vw+1rem,2.25rem)] font-semibold leading-tight;
+    font-size: clamp(1.5rem, 2.5vw + 1rem, 2.25rem);
+    font-weight: 600;
+    line-height: 1.15;
   }
 
   h3 {
-    @apply text-[clamp(1.25rem,1.5vw+1rem,1.6rem)] font-semibold leading-snug;
+    font-size: clamp(1.25rem, 1.5vw + 1rem, 1.6rem);
+    font-weight: 600;
+    line-height: 1.2;
   }
 
   ::selection {
@@ -98,39 +121,87 @@
 
 @layer components {
   .container-diocese {
-    @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8;
+    width: min(100%, 1280px);
+    margin-inline: auto;
+    padding-inline: 1rem;
   }
 
   .btn {
-    @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-semibold transition-all duration-200 ease-diocese-ease disabled:cursor-not-allowed disabled:opacity-60;
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 200ms ease;
   }
 
   .btn-primary {
-    @apply btn bg-gold text-navy shadow-soft hover:bg-gold-light active:scale-[0.98];
+    background: var(--color-gold);
+    color: var(--color-navy);
+    box-shadow: var(--shadow-soft);
   }
 
   .btn-secondary {
-    @apply btn bg-navy text-white hover:bg-blue active:scale-[0.98];
+    background: var(--color-navy);
+    color: white;
   }
 
   .btn-outline {
-    @apply btn border-2 border-white text-white hover:bg-white hover:text-navy active:scale-[0.98];
+    border: 2px solid white;
+    color: white;
+    background: transparent;
   }
 
   .card {
-    @apply rounded-card border border-line bg-white shadow-soft transition-all duration-300 ease-diocese-ease;
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-line);
+    background: white;
+    box-shadow: var(--shadow-soft);
+    transition: all 300ms var(--ease-diocese-ease);
   }
 
   .card:hover {
-    @apply -translate-y-1 shadow-diocese;
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-diocese);
   }
 
   .section {
-    @apply relative py-16 sm:py-20;
+    position: relative;
+    padding-block: 4rem;
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 700ms var(--ease-diocese-ease), transform 700ms var(--ease-diocese-ease);
+  }
+
+  .reveal-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .cinematic-hero {
+    min-height: min(760px, 82vh);
+  }
+
+  .cinematic-hero > img {
+    animation: hero-drift 18s ease-in-out infinite alternate;
+    transform: scale(1.06);
+  }
+
+  .hero-vignette {
+    animation: vignette-breathe 8s ease-in-out infinite alternate;
   }
 
   .skeleton {
-    @apply animate-pulse rounded-card bg-cream;
+    border-radius: var(--radius-card);
+    background: var(--color-cream);
+    animation: pulse 1.5s ease-in-out infinite;
   }
 }
 
@@ -143,5 +214,58 @@
   to {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+@keyframes hero-drift {
+  from { transform: scale(1.06) translate3d(-1%, 0, 0); }
+  to { transform: scale(1.12) translate3d(1%, -1%, 0); }
+}
+
+@keyframes vignette-breathe {
+  from { opacity: 0.86; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse {
+  50% { opacity: 0.55; }
+}
+
+.loader-orbit {
+  animation: loader-orbit 1.8s linear infinite;
+}
+
+.loader-orbit-delayed {
+  animation-duration: 2.8s;
+  animation-direction: reverse;
+}
+
+.loader-panel {
+  animation: loader-panel-in 700ms var(--ease-diocese-ease) both;
+}
+
+@keyframes loader-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes loader-panel-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-visible,
+  .cinematic-hero > img,
+  .hero-vignette {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .loader-orbit,
+  .loader-panel {
+    animation: none;
   }
 }
