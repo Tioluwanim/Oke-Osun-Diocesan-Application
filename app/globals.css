@@ -126,7 +126,10 @@
     padding-inline: 1rem;
   }
 
-  .btn {
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-outline {
     display: inline-flex;
     min-height: 48px;
     align-items: center;
@@ -136,7 +139,24 @@
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
     font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
     transition: all 200ms ease;
+  }
+
+  .btn:focus-visible,
+  .btn-primary:focus-visible,
+  .btn-secondary:focus-visible,
+  .btn-outline:focus-visible {
+    transform: translateY(-1px);
+  }
+
+  .btn:disabled,
+  .btn-primary:disabled,
+  .btn-secondary:disabled,
+  .btn-outline:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 
   .btn-primary {
@@ -145,15 +165,43 @@
     box-shadow: var(--shadow-soft);
   }
 
+  .btn-primary:hover {
+    background: var(--color-gold-light);
+    transform: translateY(-2px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0) scale(0.98);
+  }
+
   .btn-secondary {
     background: var(--color-navy);
     color: white;
+  }
+
+  .btn-secondary:hover {
+    background: var(--color-blue);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary:active {
+    transform: translateY(0) scale(0.98);
   }
 
   .btn-outline {
     border: 2px solid white;
     color: white;
     background: transparent;
+  }
+
+  .btn-outline:hover {
+    background: white;
+    color: var(--color-navy);
+    transform: translateY(-2px);
+  }
+
+  .btn-outline:active {
+    transform: translateY(0) scale(0.98);
   }
 
   .card {
@@ -202,6 +250,10 @@
     border-radius: var(--radius-card);
     background: var(--color-cream);
     animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .loader-stage {
+    animation: loader-fade 2.2s ease-in-out infinite;
   }
 }
 
@@ -253,6 +305,11 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes loader-fade {
+  0%, 100% { opacity: 0.72; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .reveal-visible,
@@ -265,7 +322,8 @@
   }
 
   .loader-orbit,
-  .loader-panel {
+  .loader-panel,
+  .loader-stage {
     animation: none;
   }
 }

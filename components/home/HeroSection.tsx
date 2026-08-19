@@ -22,11 +22,11 @@ export default function HeroSection() {
           Proclaiming the Gospel of Jesus Christ through worship, evangelism, discipleship, and
           compassionate service across our archdeaconries and parishes.
         </p>
-        <div className="reveal reveal-visible flex flex-wrap items-center justify-center gap-4 [animation-delay:240ms]">
-          <Link href="/about" className="btn-primary">
+        <div className="reveal reveal-visible flex w-full flex-col items-center justify-center gap-3 [animation-delay:240ms] sm:flex-row sm:gap-4">
+          <Link href="/about" className="btn-primary w-full sm:w-auto">
             Discover Our Diocese
           </Link>
-          <Link href="/contact" className="btn-outline">
+          <Link href="/contact" className="btn-outline w-full sm:w-auto">
             Contact Us
           </Link>
         </div>
