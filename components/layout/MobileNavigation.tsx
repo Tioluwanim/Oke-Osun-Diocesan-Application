@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
 import { NAV_LINKS } from './nav-links';
@@ -56,7 +57,7 @@ export default function MobileNavigation() {
         </svg>
       </button>
 
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50">
           <button
             type="button"
@@ -144,7 +145,8 @@ export default function MobileNavigation() {
               <p className="mt-3 text-center text-xs leading-relaxed text-white/45">Serving Christ through worship, mission, and compassionate service.</p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
