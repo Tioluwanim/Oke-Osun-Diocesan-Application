@@ -14,9 +14,9 @@ export const NAV_LINKS = [
   },
   { label: 'Sermons', href: '/sermons' },
   { label: 'News', href: '/news' },
-  { label: 'Events', href: '/events' },
-  { label: 'Programs', href: '/programs' },
+  { label: 'Events & Programs', href: '/events' },
   { label: 'Gallery', href: '/gallery' },
   { label: 'Give', href: '/give' },
+  { label: 'Support', href: '/support' },
   { label: 'Contact', href: '/contact' },
 ] as const;
