@@ -6,9 +6,17 @@ interface RevealProps {
   children: React.ReactNode;
   className?: string;
   delay?: number;
+  variant?: 'up' | 'left' | 'right' | 'scale';
 }
 
-export default function Reveal({ children, className = '', delay = 0 }: RevealProps) {
+const VARIANT_CLASS: Record<NonNullable<RevealProps['variant']>, string> = {
+  up: 'reveal',
+  left: 'reveal-left',
+  right: 'reveal-right',
+  scale: 'reveal-scale',
+};
+
+export default function Reveal({ children, className = '', delay = 0, variant = 'up' }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -33,7 +41,7 @@ export default function Reveal({ children, className = '', delay = 0 }: RevealPr
   return (
     <div
       ref={ref}
-      className={`reveal ${visible ? 'reveal-visible' : ''} ${className}`}
+      className={`${VARIANT_CLASS[variant]} ${visible ? 'reveal-visible' : ''} ${className}`}
       style={{ transitionDelay: `${delay}ms` }}
     >
       {children}
