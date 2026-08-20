@@ -1,15 +1,14 @@
 import { Archdeaconry } from '@/types';
 
+// NOTE: The Cathedral is the Diocese's own seat church, not an archdeaconry —
+// it does not belong in this list. Model it on the Parish record instead
+// (Parish.isCathedral = true), same as the FastAPI backend's Parish.is_cathedral
+// flag. It was previously miscoded here as an "arch-001" entry with a
+// mismatched slug ("Gbongan") that collided with the real Gbongan Archdeaconry
+// below — removed. Add cathedral info to a dedicated /about or /archdeaconries
+// "Cathedral" section instead, sourced from Parish data, not this array.
+
 export const archdeaconries: Archdeaconry[] = [
-  {
-    id: 'arch-001',
-    name: 'Cathedral',
-    slug: 'Gbongan',
-    archdeacon: 'Ven. O.O. Olaniran',
-    parishCount: 1,
-    description: 'Covering parishes within and around Gbongan town.',
-    headquarters: "St. Paul's Cathedral, Gbongan",
-  },
   { id: 'arch-003', name: 'Ikire Archdeaconry', slug: 'ikire', archdeacon: 'Ven. S. O. Adeloye', parishCount: 13, description: 'Serving Anglican churches and mission communities in Ikire.', headquarters: "St. John's Anglican Church, Ikire" },
   { id: 'arch-004', name: 'Odeomu Archdeaconry', slug: 'odeomu', archdeacon: 'Ven. O. Akeredolu', parishCount: 8, description: 'Serving the churches and communities around Odeomu.', headquarters: "St. David's Anglican Church, Oke-Amola" },
   { id: 'arch-005', name: 'Gbongan Archdeaconry', slug: 'gbongan', archdeacon: 'Ven. F. O. Odesanmi', parishCount: 7, description: 'A growing family of parishes in and around Gbongan.', headquarters: "St. Peter's Anglican Church, Oke-Apata" },
