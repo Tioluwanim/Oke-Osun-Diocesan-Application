@@ -24,7 +24,7 @@ export default function GalleryPage() {
       <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'Gallery' }]} />
       <section className="section bg-white">
         <div className="container-diocese">
-          <div className="mb-8 flex flex-wrap gap-3 text-sm font-semibold text-navy">
+          <div className="mb-8 flex flex-wrap gap-3 text-base font-semibold text-navy">
             {['All', 'Synod', 'Youth', 'Mothers', 'Ordination', 'Harvest', 'Schools'].map((label, index) => (
               <span key={label} className={`rounded-full border px-4 py-2 ${index === 0 ? 'border-gold bg-gold text-navy' : 'border-line bg-cream text-ink-muted'}`}>
                 {label}
@@ -44,7 +44,7 @@ export default function GalleryPage() {
                   className="object-cover transition-transform duration-500 ease-diocese-ease group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy/90 to-transparent p-3">
-                  <span className="text-sm font-medium text-white">{item.title}</span>
+                  <span className="text-base font-medium text-white">{item.title}</span>
                 </div>
               </div>
             ))}
