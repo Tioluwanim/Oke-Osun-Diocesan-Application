@@ -16,7 +16,7 @@ export default function HeroSection() {
           />
           <div className="hero-vignette absolute inset-0 -z-10 bg-gradient-to-b from-navy/40 via-navy/55 to-navy/70" />
           <div className="flex min-h-[42vh] flex-col items-center justify-center gap-5 px-4 py-12 text-center sm:min-h-[50vh] sm:px-8 sm:py-16">
-            <p className="reveal reveal-visible text-xs font-semibold uppercase tracking-[0.2em] text-gold sm:text-sm">
+            <p className="reveal reveal-visible text-base font-semibold uppercase tracking-[0.2em] text-gold">
               Church of Nigeria - Anglican Communion
             </p>
             <h1 className="reveal reveal-visible text-white [animation-delay:80ms]">Diocese of Oke-Osun</h1>
