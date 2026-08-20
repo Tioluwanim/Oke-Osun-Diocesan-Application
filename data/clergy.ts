@@ -6,7 +6,7 @@ export const clergy: ClergyMember[] = [
     name: 'Ven. Samuel Adeyemi',
     title: 'Archdeacon',
     parish: 'St. Peter\'s Parish',
-    archdeaconry: 'Ijeshaland Archdeaconry',
+    archdeaconry: 'Gbongan Archdeaconry', // TODO: confirm real archdeacon-to-archdeaconry mapping with the diocesan office
     photo: '/images/bishop.png',
     email: 'samuel.adeyemi@okeosundiocese.org',
   },
@@ -15,13 +15,13 @@ export const clergy: ClergyMember[] = [
     name: 'Rev. Canon Elizabeth Fadipe',
     title: 'Canon',
     parish: 'All Saints Parish',
-    archdeaconry: 'Ilesa Archdeaconry',
+    archdeaconry: 'Odeomu Archdeaconry', // TODO: confirm real archdeacon-to-archdeaconry mapping with the diocesan office
   },
   {
     id: 'clg-003',
     name: 'Rev. David Ogunleye',
     title: 'Vicar',
     parish: 'St. Andrew\'s Parish',
-    archdeaconry: 'Ijeshaland Archdeaconry',
+    archdeaconry: 'Ikire Archdeaconry', // TODO: confirm real archdeacon-to-archdeaconry mapping with the diocesan office
   },
 ];
