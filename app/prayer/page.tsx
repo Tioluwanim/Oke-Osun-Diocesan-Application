@@ -32,7 +32,7 @@ export default function PrayerPage() {
 
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <div className="card p-6 sm:p-8">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Prayer Ministry</span>
+              <span className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Prayer Ministry</span>
               <h3 className="mt-4">Let Us Stand With You</h3>
               <p className="mt-3 text-ink-muted">
                 Prayer is an important part of the life and ministry of Oke-Osun Diocese. We welcome
@@ -49,7 +49,7 @@ export default function PrayerPage() {
                     <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-gold text-lg text-navy">✦</div>
                     <div>
                       <h4 className="text-lg">{title}</h4>
-                      <p className="mt-1 text-sm text-ink-muted">{text}</p>
+                      <p className="mt-1 text-base text-ink-muted">{text}</p>
                     </div>
                   </div>
                 ))}
@@ -59,23 +59,23 @@ export default function PrayerPage() {
             <form className="card flex flex-col gap-5 p-6 sm:p-8">
               <h2 className="mb-2">Submit Your Prayer Request</h2>
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="pr-name" className="text-sm font-semibold text-navy">Full Name</label>
+                <label htmlFor="pr-name" className="text-base font-semibold text-navy">Full Name</label>
                 <input id="pr-name" type="text" placeholder="Enter your full name" className="min-h-[48px] rounded-lg border border-line px-4 text-base focus:border-gold" />
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="pr-email" className="text-sm font-semibold text-navy">Email Address</label>
+                  <label htmlFor="pr-email" className="text-base font-semibold text-navy">Email Address</label>
                   <input id="pr-email" type="email" placeholder="Enter your email" className="min-h-[48px] rounded-lg border border-line px-4 text-base focus:border-gold" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="pr-phone" className="text-sm font-semibold text-navy">Phone Number</label>
+                  <label htmlFor="pr-phone" className="text-base font-semibold text-navy">Phone Number</label>
                   <input id="pr-phone" type="tel" placeholder="Phone number" className="min-h-[48px] rounded-lg border border-line px-4 text-base focus:border-gold" />
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="pr-category" className="text-sm font-semibold text-navy">Prayer Category</label>
+                <label htmlFor="pr-category" className="text-base font-semibold text-navy">Prayer Category</label>
                 <select id="pr-category" className="min-h-[48px] rounded-lg border border-line px-4 text-base text-navy focus:border-gold">
                   <option value="">Select a category</option>
                   {PRAYER_CATEGORIES.map((category) => (
@@ -85,9 +85,9 @@ export default function PrayerPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="pr-request" className="text-sm font-semibold text-navy">Your Prayer Request</label>
+                <label htmlFor="pr-request" className="text-base font-semibold text-navy">Your Prayer Request</label>
                 <textarea id="pr-request" rows={8} maxLength={1000} placeholder="Write your prayer request here..." className="rounded-lg border border-line px-4 py-3 text-base focus:border-gold" />
-                <span className="text-right text-xs text-ink-muted">0 / 1000</span>
+                <span className="text-right text-base text-ink-muted">0 / 1000</span>
               </div>
 
               <button type="submit" className="btn-primary w-full">Submit Prayer Request</button>
@@ -103,7 +103,7 @@ export default function PrayerPage() {
             <p className="text-xl text-navy">
               The prayer of a righteous person is powerful and effective.
             </p>
-            <p className="mt-3 text-sm font-semibold uppercase tracking-[0.2em] text-ink-muted">James 5:16</p>
+            <p className="mt-3 text-base font-semibold uppercase tracking-[0.2em] text-ink-muted">James 5:16</p>
           </div>
         </div>
       </section>
