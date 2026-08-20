@@ -8,11 +8,11 @@ export default function ClergyCard({ member }: { member: ClergyMember }) {
         {member.photo && <Image src={member.photo} alt="" fill className="object-cover" />}
       </div>
       <h3 className="text-lg">{member.name}</h3>
-      <p className="text-sm font-semibold text-gold">{member.title}</p>
-      <p className="text-sm text-ink-muted">{member.parish}</p>
-      <p className="text-sm text-ink-muted">{member.archdeaconry}</p>
+      <p className="text-base font-semibold text-gold">{member.title}</p>
+      <p className="text-base text-ink-muted">{member.parish}</p>
+      <p className="text-base text-ink-muted">{member.archdeaconry}</p>
       {member.email && (
-        <a href={`mailto:${member.email}`} className="text-sm font-semibold text-blue hover:text-gold">
+        <a href={`mailto:${member.email}`} className="text-base font-semibold text-blue hover:text-gold">
           {member.email}
         </a>
       )}
