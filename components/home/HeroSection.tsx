@@ -33,6 +33,9 @@ export default function HeroSection() {
               </Link>
             </div>
           </div>
+          <div className="scroll-cue pointer-events-none absolute inset-x-0 bottom-4 flex justify-center text-white/70" aria-hidden="true">
+            <span className="text-2xl">⌄</span>
+          </div>
         </div>
       </div>
     </section>
