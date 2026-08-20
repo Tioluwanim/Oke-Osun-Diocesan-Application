@@ -31,15 +31,15 @@ export default async function EventDetailPage({ params }: { params: { id: string
         <div className="container-diocese max-w-3xl">
           <dl className="mb-8 grid gap-6 sm:grid-cols-3">
             <div>
-              <dt className="text-sm font-semibold uppercase text-ink-muted">Date</dt>
+              <dt className="text-base font-semibold uppercase text-ink-muted">Date</dt>
               <dd className="text-lg text-navy">{formatDate(event.date)}</dd>
             </div>
             <div>
-              <dt className="text-sm font-semibold uppercase text-ink-muted">Time</dt>
+              <dt className="text-base font-semibold uppercase text-ink-muted">Time</dt>
               <dd className="text-lg text-navy">{event.time}</dd>
             </div>
             <div>
-              <dt className="text-sm font-semibold uppercase text-ink-muted">Location</dt>
+              <dt className="text-base font-semibold uppercase text-ink-muted">Location</dt>
               <dd className="text-lg text-navy">{event.location}</dd>
             </div>
           </dl>
