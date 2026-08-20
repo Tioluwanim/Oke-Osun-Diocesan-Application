@@ -13,15 +13,15 @@ export default function ContactPage() {
         <div className="container-diocese grid gap-10 lg:grid-cols-2">
           <form className="card flex flex-col gap-5 p-6 sm:p-8">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="c-name" className="text-sm font-semibold text-navy">Full Name</label>
+              <label htmlFor="c-name" className="text-base font-semibold text-navy">Full Name</label>
               <input id="c-name" type="text" className="min-h-[48px] rounded-lg border border-line px-4 text-base focus:border-gold" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="c-email" className="text-sm font-semibold text-navy">Email Address</label>
+              <label htmlFor="c-email" className="text-base font-semibold text-navy">Email Address</label>
               <input id="c-email" type="email" className="min-h-[48px] rounded-lg border border-line px-4 text-base focus:border-gold" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="c-message" className="text-sm font-semibold text-navy">Message</label>
+              <label htmlFor="c-message" className="text-base font-semibold text-navy">Message</label>
               <textarea id="c-message" rows={5} className="rounded-lg border border-line px-4 py-3 text-base focus:border-gold" />
             </div>
             <button type="submit" className="btn-primary w-full">Send Message</button>
