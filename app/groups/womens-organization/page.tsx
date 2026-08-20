@@ -21,7 +21,7 @@ export default async function WomensOrganizationPage() {
           {children.map((g) => (
             <Link key={g.slug} href={`/groups/womens-organization/${g.slug}`} className="card flex flex-col gap-2 p-6">
               <h3 className="text-lg">{g.name}</h3>
-              <p className="text-sm text-ink-muted">{g.description}</p>
+              <p className="text-base text-ink-muted">{g.description}</p>
               <span className="mt-2 font-semibold text-blue">Learn more →</span>
             </Link>
           ))}
