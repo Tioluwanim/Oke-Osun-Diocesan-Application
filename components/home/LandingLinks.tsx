@@ -5,7 +5,7 @@ export default function LandingLinks() {
     <section className="section bg-white">
       <div className="container-diocese">
         <div className="mb-8 text-left">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">Get Involved</p>
+          <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Get Involved</p>
           <h2 className="mt-3">A Diocese Rooted in Faith and Service</h2>
         </div>
 
@@ -18,7 +18,7 @@ export default function LandingLinks() {
           ].map((item) => (
             <Link key={item.href} href={item.href} className="card flex flex-col gap-2 p-6">
               <h3 className="text-lg">{item.title}</h3>
-              <p className="text-sm text-ink-muted">{item.blurb}</p>
+              <p className="text-base text-ink-muted">{item.blurb}</p>
               <span className="mt-auto pt-2 font-semibold text-blue">Learn more →</span>
             </Link>
           ))}
