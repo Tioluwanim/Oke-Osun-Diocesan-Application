@@ -29,7 +29,7 @@ export default function SupportPage() {
               ].map(([title, description]) => (
                 <div key={title} className="card p-5">
                   <h3 className="text-lg">{title}</h3>
-                  <p className="mt-2 text-sm text-ink-muted">{description}</p>
+                  <p className="mt-2 text-base text-ink-muted">{description}</p>
                 </div>
               ))}
             </div>
