@@ -8,12 +8,12 @@ function formatDate(iso: string) {
 export default function SermonCard({ sermon }: { sermon: Sermon }) {
   return (
     <article className="card flex flex-col gap-3 p-5">
-      <p className="text-sm font-semibold uppercase tracking-wide text-gold">{sermon.scripture}</p>
+      <p className="text-base font-semibold uppercase tracking-wide text-gold">{sermon.scripture}</p>
       <h3 className="text-lg">{sermon.title}</h3>
-      <p className="text-sm text-ink-muted">
+      <p className="text-base text-ink-muted">
         {sermon.preacher} · {formatDate(sermon.date)}
       </p>
-      <p className="line-clamp-2 text-sm text-ink-muted">{sermon.description}</p>
+      <p className="line-clamp-2 text-base text-ink-muted">{sermon.description}</p>
       <Link href={`/sermons/${sermon.id}`} className="mt-1 font-semibold text-blue hover:text-gold">
         Listen / Watch →
       </Link>
