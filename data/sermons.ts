@@ -8,7 +8,7 @@ export const sermons: Sermon[] = [
     date: '2026-08-09',
     scripture: '1 John 1:5-7',
     description: 'A call to holiness and honest fellowship as children of light.',
-    youtubeId: 'dQw4w9WgXcQ',
+    youtubeId: '', // TODO: was left as a Rick Astley placeholder ID — replace with the real YouTube video ID for this sermon
     image: '/images/bishop.png',
   },
   {
