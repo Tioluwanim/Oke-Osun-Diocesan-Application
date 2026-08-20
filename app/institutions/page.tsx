@@ -19,7 +19,7 @@ export default function InstitutionsPage() {
         <div className="container-diocese grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {INSTITUTIONS.map((i) => (
             <div key={i.name} className="card p-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gold">{i.type}</p>
+              <p className="text-base font-semibold uppercase tracking-wide text-gold">{i.type}</p>
               <h3 className="mt-2 text-lg">{i.name}</h3>
             </div>
           ))}
