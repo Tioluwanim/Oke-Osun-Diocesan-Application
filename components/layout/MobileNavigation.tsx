@@ -92,7 +92,7 @@ export default function MobileNavigation() {
             </div>
 
             <nav aria-label="Mobile navigation" className="flex-1">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-gold">Explore the Diocese</p>
+              <p className="mb-3 text-base font-semibold uppercase tracking-[0.22em] text-gold">Explore the Diocese</p>
               <ul className="flex flex-col gap-1">
                 {NAV_LINKS.map((link) => (
                   <li key={link.href}>
@@ -110,14 +110,14 @@ export default function MobileNavigation() {
                         {groupsOpen && (
                           <ul className="border-t border-white/10 px-3 pb-3 pt-2">
                             <li>
-                              <Link href={link.href} onClick={closeMenu} className="flex min-h-[42px] items-center rounded-xl px-3 text-sm font-semibold text-gold transition-colors hover:bg-white/10">View all groups</Link>
+                              <Link href={link.href} onClick={closeMenu} className="flex min-h-[48px] items-center rounded-xl px-3 text-base font-semibold text-gold transition-colors hover:bg-white/10">View all groups</Link>
                             </li>
                             {link.children.map((child) => (
                               <li key={child.href}>
                                 <Link
                                   href={child.href}
                                   onClick={closeMenu}
-                                  className="flex min-h-[42px] items-center rounded-xl px-3 text-sm text-white/75 transition-colors duration-200 hover:bg-white/10 hover:text-gold"
+                                  className="flex min-h-[48px] items-center rounded-xl px-3 text-base text-white/75 transition-colors duration-200 hover:bg-white/10 hover:text-gold"
                                 >
                                   {child.label}
                                 </Link>
@@ -142,7 +142,7 @@ export default function MobileNavigation() {
 
             <div className="mt-8 border-t border-white/10 pt-5">
               <Link href="/support" onClick={closeMenu} className="btn-primary flex w-full">Support the Diocese</Link>
-              <p className="mt-3 text-center text-xs leading-relaxed text-white/45">Serving Christ through worship, mission, and compassionate service.</p>
+              <p className="mt-3 text-center text-base leading-relaxed text-white/45">Serving Christ through worship, mission, and compassionate service.</p>
             </div>
           </div>
         </div>,
