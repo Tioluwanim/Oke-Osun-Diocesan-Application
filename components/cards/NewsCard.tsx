@@ -15,11 +15,11 @@ export default function NewsCard({ article }: { article: NewsArticle }) {
         )}
       </div>
       <div className="flex flex-1 flex-col gap-2 p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gold">
+        <p className="text-base font-semibold uppercase tracking-wide text-gold">
           {article.category} · {formatDate(article.date)}
         </p>
         <h3 className="text-lg">{article.headline}</h3>
-        <p className="line-clamp-2 text-sm text-ink-muted">{article.summary}</p>
+        <p className="line-clamp-2 text-base text-ink-muted">{article.summary}</p>
         <Link href={`/news/${article.slug}`} className="mt-auto pt-3 font-semibold text-blue hover:text-gold">
           Read more →
         </Link>
