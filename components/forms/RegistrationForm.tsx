@@ -60,7 +60,7 @@ export default function RegistrationForm({ program }: { program: Program }) {
     type: string = 'text'
   ) => (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={key} className="text-sm font-semibold text-navy">
+      <label htmlFor={key} className="text-base font-semibold text-navy">
         {label} <span aria-hidden="true" className="text-gold">*</span>
       </label>
       <input
@@ -74,7 +74,7 @@ export default function RegistrationForm({ program }: { program: Program }) {
         className="min-h-[48px] rounded-lg border border-line px-4 text-base focus:border-gold"
       />
       {errors[key] && (
-        <p id={`${key}-error`} className="text-sm font-medium text-red-700">
+        <p id={`${key}-error`} className="text-base font-medium text-red-700">
           {errors[key]}
         </p>
       )}
@@ -88,7 +88,7 @@ export default function RegistrationForm({ program }: { program: Program }) {
       {field('email', 'Email Address', 'email')}
       {field('parish', 'Parish')}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="groupAffiliation" className="text-sm font-semibold text-navy">
+        <label htmlFor="groupAffiliation" className="text-base font-semibold text-navy">
           Group Affiliation (optional)
         </label>
         <input
@@ -102,7 +102,7 @@ export default function RegistrationForm({ program }: { program: Program }) {
       </div>
 
       {status === 'error' && (
-        <p className="text-sm font-medium text-red-700">
+        <p className="text-base font-medium text-red-700">
           We could not submit your registration. Please check your internet connection and try again.
         </p>
       )}
