@@ -42,7 +42,7 @@ export default function AboutPage() {
             <h2>Our Vision</h2>
             <p className="mt-3 text-ink-muted">
               A Diocese of vibrant, Christ-centered parishes making disciples and transforming
-              communities across Ijeshaland and beyond.
+              communities across Oke-Osun and beyond.
             </p>
           </Reveal>
           <Reveal delay={100} className="card p-8">
@@ -66,14 +66,14 @@ export default function AboutPage() {
               ['Prayer', 'Prayer is central to our worship, ministry, and daily life.'],
               ['Discipleship', 'We nurture believers to grow in faith and Christlike character.'],
               ['Service', "We demonstrate God's love through compassionate service."],
-            ].map(([title, text]) => <div key={title} className="rounded-card border border-line bg-cream p-5"><h3 className="text-lg">{title}</h3><p className="mt-2 text-sm text-ink-muted">{text}</p></div>)}
+            ].map(([title, text]) => <div key={title} className="rounded-card border border-line bg-cream p-5"><h3 className="text-lg">{title}</h3><p className="mt-2 text-base text-ink-muted">{text}</p></div>)}
           </Reveal>
         </div>
       </section>
 
       <section className="section bg-navy text-white">
         <div className="container-diocese grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-          <Reveal><p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">Our Slogan</p><h2 className="mt-3 text-white">Serving Christ. Serving Humanity. Transforming Communities.</h2></Reveal>
+          <Reveal><p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Our Slogan</p><h2 className="mt-3 text-white">Serving Christ. Serving Humanity. Transforming Communities.</h2></Reveal>
           <Reveal delay={120}><p className="text-lg leading-relaxed text-white/75">Our history is a continuing story of worship, mission, education, pastoral care, and faithful service across Oke-Osun. We look toward the future with confidence in God&apos;s grace and a renewed commitment to the communities entrusted to us.</p></Reveal>
         </div>
       </section>
