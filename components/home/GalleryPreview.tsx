@@ -8,7 +8,7 @@ export default function GalleryPreview() {
     <section className="section bg-cream">
       <div className="container-diocese">
         <div className="mb-8 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">Photo Gallery</p>
+          <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Photo Gallery</p>
           <h2 className="mt-3">Life in Oke-Osun Diocese</h2>
         </div>
 
