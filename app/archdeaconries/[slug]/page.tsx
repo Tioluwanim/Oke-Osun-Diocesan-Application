@@ -33,11 +33,11 @@ export default async function ArchdeaconryDetailPage({ params }: { params: { slu
           <p className="text-lg text-ink-muted">{archdeaconry.description}</p>
           <dl className="mt-8 grid gap-6 sm:grid-cols-2">
             <div>
-              <dt className="text-sm font-semibold uppercase text-ink-muted">Archdeacon</dt>
+              <dt className="text-base font-semibold uppercase text-ink-muted">Archdeacon</dt>
               <dd className="text-lg text-navy">{archdeaconry.archdeacon}</dd>
             </div>
             <div>
-              <dt className="text-sm font-semibold uppercase text-ink-muted">Parishes</dt>
+              <dt className="text-base font-semibold uppercase text-ink-muted">Parishes</dt>
               <dd className="text-lg text-navy">{archdeaconry.parishCount}</dd>
             </div>
           </dl>
