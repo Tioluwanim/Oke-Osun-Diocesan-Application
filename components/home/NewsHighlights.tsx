@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import Reveal from '@/components/ui/Reveal';
 
 const HOME_NEWS = [
   {
@@ -38,32 +39,35 @@ export default function NewsHighlights() {
   return (
     <section className="section bg-white">
       <div className="container-diocese">
-        <div className="mb-8 text-left">
+        <Reveal className="mb-8 text-left">
           <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Latest Updates</p>
           <h2 className="mt-3">News &amp; Upcoming Events</h2>
-        </div>
+          <span className="underline-grow mt-3 block h-[3px] w-16 rounded-full bg-gold" />
+        </Reveal>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {HOME_NEWS.map((item) => (
-            <article key={item.id} className="card overflow-hidden">
-              <div className="relative h-48 w-full">
-                <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
-                <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-base font-semibold text-navy">
-                  {item.date}
-                  <span className="ml-1">{item.month}</span>
+          {HOME_NEWS.map((item, index) => (
+            <Reveal key={item.id} variant="scale" delay={index * 130}>
+              <article className="stat-card card overflow-hidden">
+                <div className="relative h-48 w-full overflow-hidden">
+                  <Image src={item.image} alt={item.title} fill className="gallery-tile object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
+                  <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-base font-semibold text-navy">
+                    {item.date}
+                    <span className="ml-1">{item.month}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="p-5">
-                <div className="mb-3 flex items-center gap-3 text-base font-semibold uppercase tracking-[0.2em] text-ink-muted">
-                  <span>{item.category}</span>
+                <div className="p-5">
+                  <div className="mb-3 flex items-center gap-3 text-base font-semibold uppercase tracking-[0.2em] text-ink-muted">
+                    <span>{item.category}</span>
+                  </div>
+                  <h3 className="text-xl">{item.title}</h3>
+                  <p className="mt-3 text-base text-ink-muted">{item.summary}</p>
+                  <Link href={item.href} className="mt-4 inline-flex font-semibold text-blue hover:text-gold">
+                    Read more →
+                  </Link>
                 </div>
-                <h3 className="text-xl">{item.title}</h3>
-                <p className="mt-3 text-base text-ink-muted">{item.summary}</p>
-                <Link href={item.href} className="mt-4 inline-flex font-semibold text-blue hover:text-gold">
-                  Read more →
-                </Link>
-              </div>
-            </article>
+              </article>
+            </Reveal>
           ))}
         </div>
       </div>
