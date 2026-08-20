@@ -42,7 +42,7 @@ export default function LogoLoader({
         />
       </span>
       {showLabel && (
-        <span className={size === 'sm' ? 'text-sm text-ink-muted' : 'text-base text-ink-muted'}>
+        <span className={size === 'sm' ? 'text-base text-ink-muted' : 'text-base text-ink-muted'}>
           {label}
         </span>
       )}
