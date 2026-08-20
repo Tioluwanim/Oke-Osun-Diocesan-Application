@@ -10,7 +10,7 @@ export default async function AdminEventsPage() {
       <div className="container-diocese">
         <h1>Manage Events</h1>
         <div className="mt-6 overflow-x-auto rounded-card border border-line">
-          <table className="w-full min-w-[600px] text-left text-sm">
+          <table className="w-full min-w-[600px] text-left text-base">
             <thead className="bg-cream">
               <tr>
                 <th className="p-4 font-semibold text-navy">Title</th>
