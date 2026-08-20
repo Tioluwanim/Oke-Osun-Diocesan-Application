@@ -10,7 +10,7 @@ export default function StatsSection() {
     <section className="section bg-white">
       <div className="container-diocese">
         <div className="mb-8 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">Our Diocese</p>
+          <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Our Diocese</p>
           <h2 className="mt-3">Growing Together in Christ</h2>
         </div>
 
@@ -22,7 +22,7 @@ export default function StatsSection() {
               </div>
               <h3 className="text-4xl text-navy">{stat.value}</h3>
               <p className="mt-2 text-lg font-semibold text-navy">{stat.title}</p>
-              <p className="mt-2 text-sm text-ink-muted">{stat.copy}</p>
+              <p className="mt-2 text-base text-ink-muted">{stat.copy}</p>
             </div>
           ))}
         </div>
