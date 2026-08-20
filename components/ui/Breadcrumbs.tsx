@@ -8,7 +8,7 @@ interface Crumb {
 export default function Breadcrumbs({ items }: { items: Crumb[] }) {
   return (
     <nav aria-label="Breadcrumb" className="border-b border-line bg-cream">
-      <ol className="container-diocese flex flex-wrap items-center gap-2 py-3 text-sm text-ink-muted">
+      <ol className="container-diocese flex flex-wrap items-center gap-2 py-3 text-base text-ink-muted">
         {items.map((item, i) => (
           <li key={item.label} className="flex items-center gap-2">
             {i > 0 && <span aria-hidden="true">/</span>}
