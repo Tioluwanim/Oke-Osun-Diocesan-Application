@@ -22,7 +22,7 @@ export default function ResourcesPage() {
               <li key={r.name} className="flex items-center justify-between gap-4 p-5">
                 <div>
                   <p className="font-semibold text-navy">{r.name}</p>
-                  <p className="text-sm text-ink-muted">{r.type}</p>
+                  <p className="text-base text-ink-muted">{r.type}</p>
                 </div>
                 <button type="button" className="btn-secondary">Download</button>
               </li>
