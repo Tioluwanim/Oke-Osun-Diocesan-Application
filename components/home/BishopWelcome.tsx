@@ -10,7 +10,7 @@ export default function BishopWelcome() {
         </div>
 
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">Bishop’s Welcome</p>
+          <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Bishop’s Welcome</p>
           <h2 className="mt-3">The Rt. Rev. Oluwagbemiro Ayodele and L/Evang. Lydia Aderinsola Fabuluje</h2>
           <p className="mt-4 text-lg text-ink-muted">
             We welcome you to the official website of the Diocese of Oke-Osun, Church of Nigeria
