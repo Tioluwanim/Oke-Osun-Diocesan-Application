@@ -8,7 +8,7 @@ import { NAV_LINKS } from './nav-links';
 
 export default function Header() {
   const [groupsOpen, setGroupsOpen] = useState(false);
-  const primaryLinks = NAV_LINKS.filter((link) => ['Home', 'About', 'Bishop', 'Events & Programs', 'Contact'].includes(link.label));
+  const primaryLinks = NAV_LINKS.filter((link) => ['Home', 'About', 'Bishop', 'Events', 'Programs & Registration', 'Contact'].includes(link.label));
   const moreLinks = NAV_LINKS.filter((link) => !primaryLinks.includes(link));
 
   return (
@@ -18,7 +18,7 @@ export default function Header() {
           <div className="flex h-12 w-12 items-center justify-center">
             <Image src="/images/logo-transparent.png" alt="Oke-Osun Diocese logo" width={48} height={48} priority className="h-11 w-11 object-contain" />
           </div>
-          <span className="font-display text-sm leading-tight text-white sm:text-base lg:text-lg">
+          <span className="font-display text-base leading-tight text-white sm:text-lg lg:text-xl">
             Diocese of<br className="sm:hidden" /> Oke-Osun
           </span>
         </Link>
@@ -27,22 +27,22 @@ export default function Header() {
           <ul className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1.5 shadow-inner shadow-white/5 backdrop-blur-md">
             {primaryLinks.map((link) => (
               <li key={link.href} className="relative">
-                <Link href={link.href} className="nav-link flex min-h-[44px] items-center rounded-full px-3 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-gold">{link.label}</Link>
+                <Link href={link.href} className="nav-link flex min-h-[48px] items-center rounded-full px-4 text-base font-medium text-white/90 hover:bg-white/10 hover:text-gold">{link.label}</Link>
               </li>
             ))}
             <li className="relative">
-              <button type="button" onClick={() => setGroupsOpen((value) => !value)} aria-expanded={groupsOpen} aria-haspopup="menu" className="nav-link flex min-h-[44px] items-center gap-2 rounded-full px-3 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-gold">
+              <button type="button" onClick={() => setGroupsOpen((value) => !value)} aria-expanded={groupsOpen} aria-haspopup="menu" className="nav-link flex min-h-[48px] items-center gap-2 rounded-full px-4 text-base font-medium text-white/90 hover:bg-white/10 hover:text-gold">
                 More <span aria-hidden="true" className={`transition-transform ${groupsOpen ? 'rotate-180' : ''}`}>⌄</span>
               </button>
               {groupsOpen && <ul role="menu" className="absolute right-0 top-[calc(100%+10px)] grid min-w-[230px] gap-1 rounded-2xl border border-line bg-white p-2 shadow-diocese">
-                {moreLinks.map((link) => <li key={link.href} role="none"><Link role="menuitem" href={link.href} onClick={() => setGroupsOpen(false)} className="flex min-h-[44px] items-center rounded-xl px-3 text-sm text-navy transition-colors hover:bg-cream hover:text-blue">{link.label}</Link></li>)}
+                {moreLinks.map((link) => <li key={link.href} role="none"><Link role="menuitem" href={link.href} onClick={() => setGroupsOpen(false)} className="flex min-h-[48px] items-center rounded-xl px-4 text-base text-navy transition-colors hover:bg-cream hover:text-blue">{link.label}</Link></li>)}
               </ul>}
             </li>
           </ul>
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="/support" className="hidden sm:inline-flex min-h-[44px] items-center justify-center rounded-full bg-gold px-4 text-sm font-semibold text-navy transition-all duration-200 hover:bg-gold-light hover:shadow-[0_8px_20px_rgba(201,162,39,0.25)]">
+          <Link href="/support" className="hidden sm:inline-flex min-h-[48px] items-center justify-center rounded-full bg-gold px-5 text-base font-semibold text-navy transition-all duration-200 hover:bg-gold-light hover:shadow-[0_8px_20px_rgba(201,162,39,0.25)]">
             Support
           </Link>
           <MobileNavigation />
