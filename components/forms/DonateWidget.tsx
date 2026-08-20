@@ -24,14 +24,14 @@ export default function DonateWidget() {
   return (
     <div className="card flex flex-col gap-6 p-6 sm:p-8">
       <div>
-        <p className="mb-2 text-sm font-semibold text-navy">Giving Category</p>
+        <p className="mb-2 text-base font-semibold text-navy">Giving Category</p>
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => setCategory(c)}
-              className={`min-h-[44px] rounded-full border px-4 text-sm font-medium ${
+              className={`min-h-[48px] rounded-full border px-4 text-base font-medium ${
                 category === c ? 'border-gold bg-gold text-navy' : 'border-line text-ink-muted hover:border-gold'
               }`}
             >
@@ -42,7 +42,7 @@ export default function DonateWidget() {
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-semibold text-navy">Amount (₦)</p>
+        <p className="mb-2 text-base font-semibold text-navy">Amount (₦)</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {SUGGESTED.map((a) => (
             <button
@@ -52,7 +52,7 @@ export default function DonateWidget() {
                 setAmount(a);
                 setCustomAmount('');
               }}
-              className={`min-h-[48px] rounded-lg border px-3 text-sm font-semibold ${
+              className={`min-h-[48px] rounded-lg border px-3 text-base font-semibold ${
                 amount === a ? 'border-gold bg-gold text-navy' : 'border-line text-navy hover:border-gold'
               }`}
             >
@@ -60,7 +60,7 @@ export default function DonateWidget() {
             </button>
           ))}
         </div>
-        <label htmlFor="custom-amount" className="mt-3 block text-sm font-semibold text-navy">
+        <label htmlFor="custom-amount" className="mt-3 block text-base font-semibold text-navy">
           Custom Amount
         </label>
         <input
@@ -93,7 +93,7 @@ export default function DonateWidget() {
           `Give ₦${finalAmount.toLocaleString()} via Paystack`
         )}
       </button>
-      <p className="text-center text-xs text-ink-muted">
+      <p className="text-center text-base text-ink-muted">
         You will be redirected to Paystack&apos;s secure checkout to complete your payment.
       </p>
     </div>
