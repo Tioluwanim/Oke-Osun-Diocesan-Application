@@ -37,7 +37,7 @@ const HOME_NEWS = [
 
 export default function NewsHighlights() {
   return (
-    <section className="section bg-white">
+    <section className="section bg-cream">
       <div className="container-diocese">
         <Reveal className="mb-8 text-left">
           <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Latest Updates</p>
