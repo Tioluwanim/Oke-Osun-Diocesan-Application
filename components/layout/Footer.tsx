@@ -61,9 +61,9 @@ export default function Footer() {
         <div>
           <h2 className="mb-4 text-base font-semibold text-white">Contact</h2>
           <ul className="space-y-2 text-base">
-            <li>Bishop Court, Osogbo Road, Gbongan, Osun State, Nigeria</li>
+            <li>Bishopscourt, Alape Area, PO Box 251, Gbongan, Osun State, Nigeria</li>
             <li>
-              <a href="tel:+2340000000000" className="hover:text-gold">+234 000 000 0000</a>
+              <a href="tel:+2348037717194" className="hover:text-gold">+234 803 771 7194</a>
             </li>
             <li>
               <a href="mailto:info@okeosundiocese.org" className="hover:text-gold">info@okeosundiocese.org</a>
