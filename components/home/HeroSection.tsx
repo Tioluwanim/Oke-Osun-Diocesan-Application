@@ -15,6 +15,12 @@ export default function HeroSection() {
             className="absolute inset-0 -z-10 object-cover opacity-55"
           />
           <div className="hero-vignette absolute inset-0 -z-10 bg-gradient-to-b from-navy/40 via-navy/55 to-navy/70" />
+
+          <div className="reveal reveal-visible absolute left-4 top-4 flex items-center gap-2 rounded-full border border-white/20 bg-white/10 py-1.5 pl-1.5 pr-4 backdrop-blur-sm sm:left-6 sm:top-6">
+            <Image src="/images/logo-transparent.png" alt="" width={32} height={32} className="h-8 w-8" />
+            <span className="text-sm font-semibold text-white/90">Est. 1993</span>
+          </div>
+
           <div className="flex min-h-[42vh] flex-col items-center justify-center gap-5 px-4 py-12 text-center sm:min-h-[50vh] sm:px-8 sm:py-16">
             <p className="reveal reveal-visible text-base font-semibold uppercase tracking-[0.2em] text-gold">
               Church of Nigeria - Anglican Communion
