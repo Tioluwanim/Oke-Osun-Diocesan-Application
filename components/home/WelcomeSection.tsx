@@ -29,8 +29,8 @@ export default function WelcomeSection() {
               <div className="stat-card card p-5">
                 <h3 className="text-lg">Our Mission</h3>
                 <p className="mt-2 text-base text-ink-muted">
-                  Oke-Osun shall be a Bible-based Diocese devoted to worship in Spirit and truth,
-                  evangelism, discipleship, and social transformation.
+                  Oke-Osun shall be a Bible-based Diocese that is on the path of rebirth at the
+                  ancient way of worshipping God in Spirit and truth.
                 </p>
               </div>
             </Reveal>
@@ -38,8 +38,10 @@ export default function WelcomeSection() {
               <div className="stat-card card p-5">
                 <h3 className="text-lg">Our Vision</h3>
                 <p className="mt-2 text-base text-ink-muted">
-                  To build a vibrant Diocese, shining brighter every day through the proclamation of
-                  the Gospel of our Lord Jesus Christ.
+                  To build a virile Diocese that shall be growing light in the darkness of the
+                  world, shining brighter every day through the proclamation of the Gospel of our
+                  Lord Jesus Christ, winning souls for Christ and making them disciples fit for the
+                  Kingdom of God.
                 </p>
               </div>
             </Reveal>
