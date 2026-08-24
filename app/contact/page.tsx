@@ -28,20 +28,24 @@ export default function ContactPage() {
           </form>
 
           <div>
-            <h2>Bishop Court</h2>
+            <h2>Bishop&apos;s Court</h2>
             <address className="mt-4 space-y-2 not-italic text-lg text-ink-muted">
-              <p>Bishop Court, Osogbo Road, Gbongan, Osun State, Nigeria</p>
-              <p><a href="tel:+2340000000000" className="hover:text-gold">+234 000 000 0000</a></p>
+              <p>Bishopscourt, Alape Area, PO Box 251, Gbongan, Osun State, Nigeria</p>
+              <p><a href="tel:+2348037717194" className="hover:text-gold">+234 803 771 7194</a></p>
               <p><a href="mailto:info@okeosundiocese.org" className="hover:text-gold">info@okeosundiocese.org</a></p>
             </address>
             <div className="mt-6 aspect-video overflow-hidden rounded-card border border-line">
               <iframe
-                title="Map to Bishop Court"
+                title="Map to Bishop's Court, Gbongan"
                 className="h-full w-full"
                 loading="lazy"
-                src="https://www.google.com/maps?q=Osogbo+Road,Gbongan,Osun+State,Nigeria&output=embed"
+                src="https://www.google.com/maps?q=Bishopscourt,+Gbongan,+Osun+State,+Nigeria&output=embed"
               />
             </div>
+            <p className="mt-3 text-sm text-ink-muted">
+              Map centred on Gbongan, Osun State — the diocesan headquarters town. If you need
+              precise turn-by-turn directions, please call ahead using the number above.
+            </p>
           </div>
         </div>
       </section>
