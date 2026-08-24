@@ -12,15 +12,17 @@ export default function BishopWelcome() {
 
         <Reveal variant="right" delay={120}>
           <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Bishop’s Welcome</p>
-          <h2 className="mt-3">The Rt. Rev. Oluwagbemiro Ayodele and L/Evang. Lydia Aderinsola Fabuluje</h2>
+          <h2 className="mt-3">The Rt. Rev. Oluwagbemiro Ayodele Fabuluje</h2>
           <p className="mt-4 text-lg text-ink-muted">
-            We welcome you to the official website of the Diocese of Oke-Osun, Church of Nigeria
-            (Anglican Communion). We are delighted to have you visit our online community where
-            faith, worship, evangelism, and service remain our priority.
+            Dear Brothers and Sisters in Christ, it is my joy to welcome you to the official
+            website of the Diocese of Oke-Osun. Our Diocese remains committed to the proclamation
+            of the saving Gospel of Jesus Christ, the teaching of God&apos;s Holy Word, the
+            celebration of the Sacraments, and the extension of God&apos;s love to all people.
           </p>
           <p className="mt-4 text-lg text-ink-muted">
-            Our Diocese is committed to proclaiming the Gospel of Jesus Christ, nurturing believers,
-            and transforming lives through sound biblical teaching and compassionate ministry.
+            As you explore this website, I pray that you will discover opportunities for worship,
+            fellowship, discipleship, evangelism, and Christian service. May the Lord richly bless
+            you.
           </p>
           <Link href="/about/bishop" className="btn-secondary mt-8 inline-flex">
             Read Full Message
