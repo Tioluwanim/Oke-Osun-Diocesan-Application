@@ -12,13 +12,13 @@ export const metadata: Metadata = {
 export default function BishopPage() {
   return (
     <>
-      <PageHero title="The Bishop" image="/images/bishop.png" />
+      <PageHero title="The Bishop" image="/images/hero2.png" />
       <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'About', href: '/about' }, { label: 'Bishop' }]} />
 
       <section className="section bg-white">
         <div className="container-diocese grid gap-10 lg:grid-cols-[320px_1fr] lg:items-start">
           <Reveal className="relative mx-auto aspect-[3/4] w-full max-w-xs overflow-hidden rounded-card shadow-diocese">
-            <Image src="/images/bishop.png" alt="The Bishop of Oke-Osun Diocese" fill className="object-cover" />
+            <Image src="/images/hero2.png" alt="The Bishop of Oke-Osun Diocese" fill className="object-cover" />
           </Reveal>
           <Reveal delay={120}>
             <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Office of the Bishop</p>
