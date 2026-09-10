@@ -5,7 +5,7 @@ import Breadcrumbs from '@/components/ui/Breadcrumbs';
 import Reveal from '@/components/ui/Reveal';
 
 export const metadata: Metadata = {
-  title: 'The Bishop',
+  title: 'The Bishop & His Wife',
   description: 'Meet the Bishop of the Diocese of Oke-Osun.',
 };
 
@@ -22,7 +22,7 @@ export default function BishopPage() {
           </Reveal>
           <Reveal delay={120}>
             <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Office of the Bishop</p>
-            <h2 className="mt-3">The Rt. Rev. Oluwagbemiro Ayodele Fabuluje</h2>
+            <h2 className="mt-3">The Rt. Rev. Oluwagbemiro Ayodele Fabuluje and Lady Evangelist Lydia Aderinsola Fabuluje</h2>
             <p className="mt-2 font-semibold text-blue">Diocesan Bishop of Oke-Osun Diocese</p>
             <p className="mt-4 text-lg text-ink-muted">
               Welcome to the official page of the Diocesan Bishop of the Diocese of Oke-Osun,
