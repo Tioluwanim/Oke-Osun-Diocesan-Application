@@ -12,7 +12,7 @@ export default function BishopWelcome() {
 
         <Reveal variant="right" delay={120}>
           <p className="text-base font-semibold uppercase tracking-[0.2em] text-gold">Bishop’s Welcome</p>
-          <h2 className="mt-3">The Rt. Rev. Oluwagbemiro Ayodele Fabuluje</h2>
+          <h2 className="mt-3">The Rt. Rev. Oluwagbemiro Ayodele Fabuluje and Lady Evangelist Lydia Aderinsola Fabuluje</h2>
           <p className="mt-4 text-lg text-ink-muted">
             Dear Brothers and Sisters in Christ, it is my joy to welcome you to the official
             website of the Diocese of Oke-Osun. Our Diocese remains committed to the proclamation
