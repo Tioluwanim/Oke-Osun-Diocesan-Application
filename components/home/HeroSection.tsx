@@ -1,19 +1,15 @@
-import Image from 'next/image';
 import Link from 'next/link';
+import Image from 'next/image';
+import HeroSlideshow from '@/components/ui/HeroSlideshow';
+
+const HERO_IMAGES = ['/images/hero1.png', '/images/hero2.png', '/images/hero3.png', '/images/hero4.png', '/images/hero5.png'];
 
 export default function HeroSection() {
   return (
     <section className="bg-cream py-4 sm:py-6">
       <div className="container-diocese">
         <div className="cinematic-hero relative isolate overflow-hidden rounded-card bg-navy shadow-diocese">
-          <Image
-            src="/images/hero1.png"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="absolute inset-0 -z-10 object-cover opacity-55"
-          />
+          <HeroSlideshow images={HERO_IMAGES} priority />
           <div className="hero-vignette absolute inset-0 -z-10 bg-gradient-to-b from-navy/40 via-navy/55 to-navy/70" />
 
           <div className="reveal reveal-visible absolute left-4 top-4 flex items-center gap-2 rounded-full border border-white/20 bg-white/10 py-1.5 pl-1.5 pr-4 backdrop-blur-sm sm:left-6 sm:top-6">
